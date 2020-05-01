@@ -12,6 +12,31 @@ Of course you can change colors and spacings with the CSS stylesheet.
 
 You can download the `demo.html` file and open it in a browser to see a working example.
 
+## Documentation
+
+### Syntax
+
+`<<linkdropdown linkText>> ... <</linkdropdown>>`
+
+Arguments:
+
+* `linkText`: the text of the link. May contain markup.
+
+The content of `<<linkdropdown>>` may contain markup.
+
+### Example
+
+In the following example I put in the dropdown a series of three `<<link>>` tags, each one displaying a message in a box that I created at the bottom using a custom style ``@@#message``:
+
+```
+The wall on the right is interrupted in the middle by a <<linkdropdown "door">>\
+<<link "examine">><<replace "#message">>The door is closed.<</replace>><</link>>
+<<link "open">><<replace "#message">>The door is locked. You need a key.<</replace>><</link>>
+<<link "close">><<replace "#message">>It's already closed.<</replace>><</link>>\
+<</linkdropdown>>.
+@@#message;
+@@
+```
 
 ## LICENSE
 
