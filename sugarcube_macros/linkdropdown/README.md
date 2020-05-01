@@ -4,13 +4,13 @@ This macro was written for Twine [SugarCube](http://www.motoslave.net/sugarcube/
 
 The purpose of this macro is to add a dropdown menu to a link. In other words, when you click on a link an overlay opens just below the link: in this area you can add everything you want using SugarCube markup.
 
-I developed it to list all the action available on an object, like this:
+I developed it to list all the actions available on an object, like this:
 
 ![screenshot](screenshot.png)
 
 Of course you can change colors and spacings with the CSS stylesheet.
 
-You can see here a [working demo](demo.html).
+You can download the `demo.html` file and open it in a browser to see a working example.
 
 
 ## LICENSE
