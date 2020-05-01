@@ -10,7 +10,7 @@ I developed it to list all the actions available on an object, like this:
 
 Of course you can change colors and spacings with the CSS stylesheet.
 
-You can download the `demo.html` file and open it in a browser to see a working example.
+You can see a [live demo here](https://kronwiz.github.io/twineworks/site/sugarcube_macros/linkdropdown_demo.html).
 
 ## Documentation
 
