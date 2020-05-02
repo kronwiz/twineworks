@@ -16,27 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-function linkdropdown_getRandomInt(max) {
-  return Math.floor(Math.random() * Math.floor(max));
-}
-
-function linkdropdown_click( e ) {
-	var $link = $(e.target);
-	var offset = $link.outerHeight();
-	var dd_id = $link.attr("dd_id");
-	var $dropdown = $("#" + dd_id);
-
-	// toggle dropdown visibility status
-	if ( $dropdown.css("display") != "block" ) {
-		$link.addClass("open");
-		$dropdown.css({"top": offset + "px", "display": "block"});
-	}
-	else {
-		$dropdown.css("display", "none");
-		$link.removeClass("open");
-	}
-}
-
 Macro.add('linkdropdown', {
 	tags     : null,
 	handler  : function () {
@@ -47,23 +26,30 @@ Macro.add('linkdropdown', {
 		}
 		var linktext = this.args[0];
 
-		// a fairly good random number to be used for the dropdown <div> id
-		var dd_id = "linkdropdown_dropdown_" + linkdropdown_getRandomInt(12345678901234567890);
-
 		var $container = $(document.createElement("span"));
+		var $dropdown = $(document.createElement("div"));
+		var $link = $(document.createElement("a"));
+
 		$container.css("position", "relative");
 		$container.addClass("linkdropdown");
 
-		var $link = $(document.createElement("a"));
-		// store the dropdown id in the corresponding anchor to be used later on
-		$link.attr("dd_id", dd_id);
-		$link.on("click", linkdropdown_click);
 		$link.addClass("linkdropdown-anchor");
 		$link.wiki(linktext);
+		$link.ariaClick(function (e) {
+			var offset = $link.outerHeight();
 
-		var $dropdown = $(document.createElement("div"));
+			// toggle dropdown visibility status
+			if ( $dropdown.css("display") != "block" ) {
+				$link.addClass("open");
+				$dropdown.css({"top": offset + "px", "display": "block"});
+			}
+			else {
+				$dropdown.css("display", "none");
+				$link.removeClass("open");
+			}
+		});
+
 		$dropdown.css({"position": "absolute", "top": "0px", "left": "0px", "display": "none", "z-index": 3});
-		$dropdown.attr("id", dd_id);
 		$dropdown.addClass("linkdropdown-dropdown");
 		$dropdown.wiki(content);
 
