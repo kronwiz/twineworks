@@ -1,0 +1,72 @@
+:: StoryData
+{
+    "ifid": "15E4C0D5-A5B9-4701-B261-C182D60AEDB5",
+    "format": "SugarCube",
+    "start": "Test format",
+    "zoom": 1
+}
+
+:: StoryTitle
+Test macro
+
+:: Test format
+<<format set "message_line">><<append #message>>
+''> #ph0#''
+#ph1#
+<</append>>
+<</format>>
+<<set $open to false>>
+You find yourself in a wide room with a wood table in the center. Over the table there is a <<format print "book" "message_line">>\
+<<ph0>>Examine book\
+<<ph1>><<if $open is false>>The book looks very old. On the cover appears the title "Village chronicles".<<else>>The first page shows a dense and elegant handwriting.<</if>>
+<<format print "open" "message_line">>\
+<<ph0>>Open book\
+<<ph1>><<if $open is false>><<set $open to true>>You opened the book.<<else>>It's already open.<</if>><</format>>
+<<format print "get" "message_line">>\
+<<ph0>>Get book\
+<<ph1>>It's better if you leave it there.<</format>>\
+<</format>> that looks very old. On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<format print "door" "message_line">>\
+<<ph0>>Examine door\
+<<ph1>>The door is closed.
+<<format print "open" "message_line">>\
+<<ph0>>Open door\
+<<ph1>>The door is locked. You need a key.<</format>>
+<<format print "close" "message_line">>\
+<<ph0>>Close door\
+<<ph1>>It's already closed.<</format>><</format>>.
+
+@@#message;
+@@
+
+[[Show source code]]
+
+:: Show source code
+{{{
+<<format set "message_line">><<append #message>>
+''> #ph0#''
+#ph1#
+<</append>>
+<</format>>
+<<set $open to false>>
+You find yourself in a wide room with a wood table in the center. Over the table there is a <<format print "book" "message_line">>\
+<<ph0>>Examine book\
+<<ph1>><<if $open is false>>The book looks very old. On the cover appears the title "Village chronicles".<<else>>The first page shows a dense and elegant handwriting.<</if>>
+<<format print "open" "message_line">>\
+<<ph0>>Open book\
+<<ph1>><<if $open is false>><<set $open to true>>You opened the book.<<else>>It's already open.<</if>><</format>>
+<<format print "get" "message_line">>\
+<<ph0>>Get book\
+<<ph1>>It's better if you leave it there.<</format>>\
+<</format>> that looks very old. On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<format print "door" "message_line">>\
+<<ph0>>Examine door\
+<<ph1>>The door is closed.
+<<format print "open" "message_line">>\
+<<ph0>>Open door\
+<<ph1>>The door is locked. You need a key.<</format>>
+<<format print "close" "message_line">>\
+<<ph0>>Close door\
+<<ph1>>It's already closed.<</format>><</format>>.
+
+@@#message;
+@@
+}}}
