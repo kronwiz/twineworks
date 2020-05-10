@@ -1,0 +1,66 @@
+:: StoryData
+{
+    "ifid": "501D75BD-C59A-453E-984B-98A16F0ECAF4",
+    "format": "SugarCube",
+    "start": "Test linkdropdown",
+    "zoom": 1
+}
+
+:: StoryTitle
+Test macro
+
+:: Test linkdropdown
+<<set $open to false>>
+You find yourself in a wide room with a wood table in the center. Over the table there is a <<linkdropdown "book">>\
+<<link "examine">><<if $open is false>><<replace "#message">>The book looks very old. On the cover appears the title "Village chronicles".<</replace>><<else>><<replace "#message">>The first page shows a dense and elegant handwriting.<</replace>><</if>><</link>>
+<<link "open">><<if $open is false>><<set $open to true>><<replace "#message">>You opened the book.<</replace>><<else>><<replace "#message">>It's already open.<</replace>><</if>><</link>>
+<<link "get">><<replace "#message">>It's better if you leave it there.<</replace>><</link>>\
+<</linkdropdown>> that looks very old. On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<linkdropdown "door">>\
+<<link "examine">><<replace "#message">>The door is closed.<</replace>><</link>>
+<<link "open">><<replace "#message">>The door is locked. You need a key.<</replace>><</link>>
+<<link "close">><<replace "#message">>It's already closed.<</replace>><</link>><</linkdropdown>>.
+@@#message;
+@@
+
+[[Show source code]]
+
+:: Show source code
+This is the source of the previous step prettified to make it more readable.
+
+{{{
+<<set $open to false>>
+You find yourself in a wide room with a wood table in the center.
+Over the table there is a <<linkdropdown "book">>\
+<<link "examine">>\
+<<if $open is false>>\
+<<replace "#message">>The book looks very old.
+On the cover appears the title "Village chronicles".<</replace>>\
+<<else>>\
+<<replace "#message">>The first page shows a dense and elegant handwriting.<</replace>>\
+<</if>>\
+<</link>>
+<<link "open">>\
+<<if $open is false>><<set $open to true>>\
+<<replace "#message">>You opened the book.<</replace>>\
+<<else>>\
+<<replace "#message">>It's already open.<</replace>>\
+<</if>>\
+<</link>>
+<<link "get">>\
+<<replace "#message">>It's better if you leave it there.<</replace>><</link>>\
+<</linkdropdown>>
+that looks very old. On the left the sun light enters through a window. 
+The wall on the right is interrupted in the middle by a <<linkdropdown "door">>\
+<<link "examine">>\
+<<replace "#message">>The door is closed.<</replace>>\
+<</link>>
+<<link "open">>\
+<<replace "#message">>The door is locked. You need a key.<</replace>>\
+<</link>>
+<<link "close">>\
+<<replace "#message">>It's already closed.<</replace>>\
+<</link>>\
+<</linkdropdown>>.
+@@#message;
+@@
+}}}
