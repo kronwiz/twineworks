@@ -9,9 +9,20 @@
 :: Widget templates [widget]
 <<widget "messageText">>
 <<append "#message">>
+<<script>>
+var store = variables();
+if (! store.messagetextid) store["messagetextid"] = 1;
+else store.messagetextid += 1;
+var $span = $(document.createElement("span"));
+$span.attr("id", "messagetext" + store.messagetextid);
+$span.appendTo(output);
+<</script>>\
 ''> $args[0]''
 $args[1]
 <</append>>
+<<script>>
+$("#messagetext" + variables().messagetextid)[0].scrollIntoView();
+<</script>>
 <</widget>>
 
 :: StoryTitle

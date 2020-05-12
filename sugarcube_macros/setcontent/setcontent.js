@@ -32,8 +32,5 @@ Macro.add('setcontent', {
 			} else {
 				return this.error("the variableName parameter must start with '$' or '_'");
 			}
-
-			console.log(variables());
-			console.log(temporary());
 	}
 })
