@@ -100,7 +100,23 @@ var saveAs=saveAs||navigator.msSaveBlob&&navigator.msSaveBlob.bind(navigator)||f
 		<div id="init-lacking">Your browser lacks required capabilities. Please upgrade it or switch to another to continue.</div>
 		<div id="init-loading"><div>Loading&hellip;</div></div>
 	</div>
-	<!-- UUID://77A97CA3-F58A-4600-9F60-55C7B81893FD// --><tw-storydata name="Test setcontent [widget]" startnode="2" creator="Tweego" creator-version="2.1.1+81d1d71" ifid="77A97CA3-F58A-4600-9F60-55C7B81893FD" zoom="1" format="SugarCube" format-version="2.31.1" options="" hidden><style role="stylesheet" id="twine-user-stylesheet" type="text/twine-css"></style><script role="script" id="twine-user-script" type="text/twine-javascript">/* setmultiline */
+	<!-- UUID://77A97CA3-F58A-4600-9F60-55C7B81893FD// --><tw-storydata name="Test setcontent [widget]" startnode="2" creator="Tweego" creator-version="2.1.1+81d1d71" ifid="77A97CA3-F58A-4600-9F60-55C7B81893FD" zoom="1" format="SugarCube" format-version="2.31.1" options="" hidden><style role="stylesheet" id="twine-user-stylesheet" type="text/twine-css"></style><script role="script" id="twine-user-script" type="text/twine-javascript">/*
+    Copyright Kronwiz.
+    This file is part of https://github.com/kronwiz/twineworks repository.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 Macro.add('setcontent', {
 	tags     : [],
@@ -118,16 +134,24 @@ Macro.add('setcontent', {
 			} else {
 				return this.error("the variableName parameter must start with '$' or '_'");
 			}
-
-			console.log(variables());
-			console.log(temporary());
 	}
 })
 </script><tw-passagedata pid="1" name="Widget templates" tags="widget" position="100,100" size="100,100">&lt;&lt;widget &quot;messageText&quot;&gt;&gt;
 &lt;&lt;append &quot;#message&quot;&gt;&gt;
+&lt;&lt;script&gt;&gt;
+var store = variables();
+if (! store.messagetextid) store[&quot;messagetextid&quot;] = 1;
+else store.messagetextid += 1;
+var $span = $(document.createElement(&quot;span&quot;));
+$span.attr(&quot;id&quot;, &quot;messagetext&quot; + store.messagetextid);
+$span.appendTo(output);
+&lt;&lt;/script&gt;&gt;\
 &#39;&#39;&gt; $args[0]&#39;&#39;
 $args[1]
 &lt;&lt;/append&gt;&gt;
+&lt;&lt;script&gt;&gt;
+$(&quot;#messagetext&quot; + variables().messagetextid)[0].scrollIntoView();
+&lt;&lt;/script&gt;&gt;
 &lt;&lt;/widget&gt;&gt;</tw-passagedata><tw-passagedata pid="2" name="Test setcontent" tags="" position="225,100" size="100,100">&lt;&lt;set $open to false&gt;&gt;
 You find yourself in a wide room with a wood table in the center. Over the table there is a &lt;&lt;link &quot;book&quot;&gt;&gt;&lt;&lt;examineBook&gt;&gt;&lt;&lt;/link&gt;&gt; that looks very old.
 On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a &lt;&lt;link &quot;door&quot;&gt;&gt;&lt;&lt;examineDoor&gt;&gt;&lt;&lt;/link&gt;&gt;.
