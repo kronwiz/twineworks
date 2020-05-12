@@ -2,7 +2,7 @@
 
 This macro was written for Twine [SugarCube](http://www.motoslave.net/sugarcube/2/) story format.
 
-This macro is similar to SugarCube `<<set>>` with the difference that what is stored into the variable is not and expression but the content that is comprised between the opening `<<setcontent>>` and the closing `<</setcontent>>` tag.
+This macro is similar to SugarCube `<<set>>` with the difference that what is stored into the variable is not an expression but the content that is comprised between the opening `<<setcontent>>` and the closing `<</setcontent>>` tag.
 
 You can see a [live demo here](https://kronwiz.github.io/twineworks/site/sugarcube_macros/setcontent_demo.html).
 
