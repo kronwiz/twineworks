@@ -1,0 +1,57 @@
+/*
+    Copyright Kronwiz.
+    This file is part of https://github.com/kronwiz/twineworks repository.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*
+The following code must be copied in a passage with the "widget" tag.
+*/
+
+<<widget "messageTextSetDefaults">>
+<<if ndef $args[0]>><<set $messagetext_message_selector to "#messagetext">><<else>><<set $messagetext_message_selector to $args[0]>><</if>>
+<<if ndef $args[1]>><<set $messagetext_roomdescription_selector to "#roomdescription">><<else>><<set $messagetext_roomdescription_selector to $args[1]>><</if>>
+<<if ndef $args[2]>><<set $messagetext_roomdescription_prompt to "Examine room">><<else>><<set $messagetext_roomdescription_prompt to $args[2]>><</if>>
+<</widget>>
+
+<<widget "printRoomDescription">>
+<<append $messagetext_message_selector>>
+''> $args[0]''
+<<script>>
+$(variables().messagetext_roomdescription_selector).clone(true).attr("id", "roomdescription" + variables().messagetextid).appendTo(output);
+<</script>><</append>>
+<<script>>
+$("#roomdescription" + variables().messagetextid)[0].scrollIntoView();
+<</script>>
+<</widget>>
+
+<<widget "messageText">>
+<<if ndef $messagetext_message_selector>><<messageTextSetDefaults>><</if>>
+<<append $messagetext_message_selector>>
+<<script>>
+var store = variables();
+if (! store.messagetextid) store["messagetextid"] = 1;
+else store.messagetextid += 1;
+var $span = $(document.createElement("span"));
+$span.attr("id", "messagetext" + store.messagetextid);
+$span.appendTo(output);
+<</script>>\
+''<<link R>><<printRoomDescription $messagetext_roomdescription_prompt>><</link>> > $args[0]''
+$args[1]
+<</append>>
+<<script>>
+$("#messagetext" + variables().messagetextid)[0].scrollIntoView();
+<</script>>
+<</widget>>

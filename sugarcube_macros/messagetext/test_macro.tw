@@ -1,0 +1,172 @@
+:: StoryData
+{
+    "ifid": "77A97CA3-F58A-4600-9F60-55C7B81893FD",
+    "format": "SugarCube",
+    "start": "Test messageText",
+    "zoom": 1
+}
+
+:: Widget templates [widget]
+<<widget "messageTextSetDefaults">>
+<<if ndef $args[0]>><<set $messagetext_message_selector to "#messagetext">><<else>><<set $messagetext_message_selector to $args[0]>><</if>>
+<<if ndef $args[1]>><<set $messagetext_roomdescription_selector to "#roomdescription">><<else>><<set $messagetext_roomdescription_selector to $args[1]>><</if>>
+<<if ndef $args[2]>><<set $messagetext_roomdescription_prompt to "Examine room">><<else>><<set $messagetext_roomdescription_prompt to $args[2]>><</if>>
+<</widget>>
+
+<<widget "printRoomDescription">>
+<<append $messagetext_message_selector>>
+''> $args[0]''
+<<script>>
+$(variables().messagetext_roomdescription_selector).clone(true).attr("id", "roomdescription" + variables().messagetextid).appendTo(output);
+<</script>><</append>>
+<<script>>
+$("#roomdescription" + variables().messagetextid)[0].scrollIntoView();
+<</script>>
+<</widget>>
+
+<<widget "messageText">>
+<<if ndef $messagetext_message_selector>><<messageTextSetDefaults>><</if>>
+<<append $messagetext_message_selector>>
+<<script>>
+var store = variables();
+if (! store.messagetextid) store["messagetextid"] = 1;
+else store.messagetextid += 1;
+var $span = $(document.createElement("span"));
+$span.attr("id", "messagetext" + store.messagetextid);
+$span.appendTo(output);
+<</script>>\
+''<<link R>><<printRoomDescription $messagetext_roomdescription_prompt>><</link>> > $args[0]''
+$args[1]
+<</append>>
+<<script>>
+$("#messagetext" + variables().messagetextid)[0].scrollIntoView();
+<</script>>
+<</widget>>
+
+:: StoryTitle
+Test messageText [widget]
+
+:: Test messageText
+<<silently>>
+<<messageTextSetDefaults "#messagetext" "#roomdescription" "Examine room">>
+<<set $open to false>>
+<</silently>>
+@@#roomdescription;
+You find yourself in a wide room with a wood table in the center. Over the table there is a <<link "book">><<examineBook>><</link>> that looks very old.
+On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<link "door">><<examineDoor>><</link>>.
+@@
+
+[[Show source code]]
+
+@@#messagetext;
+@@
+
+<<silently>>
+<<widget "examineBook">>
+<<set _title to "Examine book">>
+<<setcontent "_description">>\
+<<if $open is false>>The book looks very old. On the cover appears the title "Village chronicles".\
+<<else>>The first page shows a dense and elegant handwriting.<</if>>
+<<link "open">><<openBook>><</link>>
+<<link "get">><<getBook>><</link>>\
+<</setcontent>>
+<<messageText _title _description>>
+<</widget>>
+
+<<widget "openBook">>
+<<setcontent "_description">>\
+<<if $open is false>><<set $open to true>>You opened the book.<<else>>It's already open.<</if>>\
+<</setcontent>>
+<<messageText "Open book" _description>>
+<</widget>>
+
+<<widget "getBook">>
+<<messageText "Get book" "It's better if you leave it there.">>
+<</widget>>
+
+<<widget "examineDoor">>
+<<setcontent "_description">>The door is closed.
+<<link "open">><<openDoor>><</link>>
+<<link "close">><<closeDoor>><</link>>\
+<</setcontent>>
+<<messageText "Examine door" _description>>
+<</widget>>
+
+<<widget "openDoor">>
+<<messageText "Open door" "The door is locked. You need a key.">>
+<</widget>>
+
+<<widget "closeDoor">>
+<<messageText "Close door" "It's already closed.">>
+<</widget>>
+<</silently>>
+
+:: Show source code
+The macro {{{<<messageText>>}}} is defined in another passage as:
+
+{{{
+<<widget "messageText">>
+<<append "#message">>
+''> $args[0]''
+$args[1]
+<</append>>
+<</widget>>
+}}}
+
+This is the code of the "story":
+
+{{{
+<<set $open to false>>
+You find yourself in a wide room with a wood table in the center.\
+ Over the table there is a <<link "book">><<examineBook>><</link>> that looks very old.
+On the left the sun light enters through a window.\
+ The wall on the right is interrupted in the middle by a\
+  <<link "door">><<examineDoor>><</link>>.
+
+[[Show source code]]
+
+@@#message;
+@@
+
+<<silently>>
+<<widget "examineBook">>
+<<set _title to "Examine book">>
+<<setcontent "_description">>\
+<<if $open is false>>The book looks very old. On the cover appears \
+the title "Village chronicles".\
+<<else>>The first page shows a dense and elegant handwriting.<</if>>
+<<link "open">><<openBook>><</link>>
+<<link "get">><<getBook>><</link>>\
+<</setcontent>>
+<<messageText _title _description>>
+<</widget>>
+
+<<widget "openBook">>
+<<setcontent "_description">>\
+<<if $open is false>><<set $open to true>>You opened the book.\
+<<else>>It's already open.<</if>>\
+<</setcontent>>
+<<messageText "Open book" _description>>
+<</widget>>
+
+<<widget "getBook">>
+<<messageText "Get book" "It's better if you leave it there.">>
+<</widget>>
+
+<<widget "examineDoor">>
+<<setcontent "_description">>The door is closed.
+<<link "open">><<openDoor>><</link>>
+<<link "close">><<closeDoor>><</link>>\
+<</setcontent>>
+<<messageText "Examine door" _description>>
+<</widget>>
+
+<<widget "openDoor">>
+<<messageText "Open door" "The door is locked. You need a key.">>
+<</widget>>
+
+<<widget "closeDoor">>
+<<messageText "Close door" "It's already closed.">>
+<</widget>>
+<</silently>>
+}}}
