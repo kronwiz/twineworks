@@ -37,6 +37,29 @@ To avoid passing always the same constant parameter to `messageText` you have to
 Arguments:
 * `message_dest_selector` (default is `#messagetext`): is the selector you put in the passage text that identifies where `messageText` is going to append the text you pass to it. It's like SugarCube `<<append>>` macro.
 
+This macro can be extended to set other default parameters. For instance, if you look at the source code, I use it also to set the defaults for two other parameters that are useful for the `<<printRoomDescription>>` macro.
+
+#### messageText
+
+This is the main macro: your "template" goes here. It goes between the end of the `<<script>>` and the end of the `<<append>>` tags:
+
+```
+<</script>>\
+''<<link R>><<printRoomDescription $messagetext_roomdescription_prompt>><</link>> > $args[0]''
+$args[1]
+<</append>>
+```
+
+In the previous code my template prints a link followed by the ">" character and the content of the first parameter of the macro, and in the row below it prints the content of the second parameter. The outcome is something like:
+
+**R > foo**
+
+bla bla bla
+
+where "foo" is the content of `$args[0]` and "bla bla bla" is the content of `$args[1]`.
+
+This way I don't have to repeat the formatting every time I want to print this kind of text, but I simply have to call the macro passing different parameters.
+
 ### Example
 
 
