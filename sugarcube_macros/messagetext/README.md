@@ -60,7 +60,35 @@ where "foo" is the content of `$args[0]` and "bla bla bla" is the content of `$a
 
 This way I don't have to repeat the formatting every time I want to print this kind of text, but I simply have to call the macro passing different parameters.
 
+The syntax is:
+
+`<<messageText args...>>`
+
+where `args` is whatever you want the macro to display: it depends on your template.
+
+
+#### printRoomDescription
+
+As the name suggests I use this macro to append the room description to the bottom of the other messages whenever it's needed, so that the user doesn't have to scroll up every time. The text to be copied must be enclosed by a block element whose selector is specified in the `$messagetext_roomdescription_selector` variable. The text will be appended to the selector specified in the`$messagetext_message_selector` variable, like the `<<messageText>>` macro does. Note that the source text is cloned using a deep cloning function, so interactive elements like links will work.
+
+The syntax is:
+
+`<<printRoomDescription args...>>`
+
+where `args` depends on your template.
+
+
 ### Example
+
+This sample code is taken from the demo. To see a complete example please look into the demo source code.
+
+```
+<<setcontent "_description">>The door is closed.
+<<link "open">><<openDoor>><</link>>
+<<link "close">><<closeDoor>><</link>>\
+<</setcontent>>
+<<messageText "Examine door" _description>>
+```
 
 
 ## LICENSE
