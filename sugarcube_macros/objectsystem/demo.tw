@@ -1,0 +1,22 @@
+:: StoryData
+{
+    "ifid": "7E84F760-498F-4832-80B5-5DC61EC86407",
+    "format": "SugarCube",
+    "start": "Test object system",
+    "zoom": 1
+}
+
+:: StoryTitle
+Test object system
+
+:: Test object system
+You find yourself in a wide room with a wood table in the center. Over the table there is a <<link "book">>book<</link>> that looks very old.
+On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<link "door">>door<</link>>.
+
+@@#message;
+@@
+
+<<silently>>
+<<object "book">><</object>>
+<</silently>>
+

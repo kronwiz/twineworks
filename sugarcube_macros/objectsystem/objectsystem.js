@@ -16,9 +16,21 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-function getObjectID( name ) {
+
+// This is executed before the rendering of the incoming passage
+$( document ).one( ':passagestart', function ( ev ) {
+	// create the temporary objects store
+	var objstore = temporary().objects;
+	if ( !objstore ) {
+		objstore = {};
+		temporary().objects = objstore;
+	}
+});
+
+
+function getObjectID ( name ) {
 	// to avoid conflicts the object ID is <passage ID> + "_" + <obj name with spaces replaced>
-	return Story.get( State.passage() ).domId + "_" + name.replace( / /, "_" );
+	return Story.get( State.passage ).domId + "_" + name.replace( / /, "_" );
 }
 
 
@@ -37,6 +49,7 @@ Macro.add( 'object', {
 
 
 	}
+})
 
 
 
@@ -54,7 +67,9 @@ Macro.add( 'setObjectProperty', {
 			obj = objstore[ objid ];
 		//else if ( objid in <inventario> ) ...   TODO: recuperare l'oggetto dall'inventario
 
-		obj[ property ] = this.payload[ 0 ].contents;
+		if ( obj )
+			obj[ property ] = this.payload[ 0 ].contents;
 
-}
+	}
+})
 
