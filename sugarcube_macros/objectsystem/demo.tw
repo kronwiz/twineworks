@@ -10,13 +10,14 @@
 Test object system
 
 :: Test object system
-You find yourself in a wide room with a wood table in the center. Over the table there is a <<link "book">>book<</link>> that looks very old.
+You find yourself in a wide room with a wood table in the center. Over the table there is a <<link "book">><<obj_property_do "book" "examine">><</obj_property_do>><</link>> that looks very old.
 On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<link "door">>door<</link>>.
 
 @@#message;
 @@
 
 <<silently>>
-<<object "book">><</object>>
+<<obj_define "book">><</obj_define>>
+<<obj_property_set "book" "examine">>It's a very old book<</obj_property_set>>
 <</silently>>
 

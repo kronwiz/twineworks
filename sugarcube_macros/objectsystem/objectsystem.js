@@ -34,16 +34,17 @@ function getObjectID ( name ) {
 }
 
 
-Macro.add( 'object', {
+Macro.add( 'obj_define', {
 	tags     : [],
 	handler  : function () {
+		console.log( "obj_define" );
 		var name = this.args[ 0 ];
 
 		var objid = getObjectID( name );
 		var objstore = temporary().objects;
 
 		if ( !(name in objstore) ) {  // TODO: controllare anche che non sia nell'inventario
-			objstore[ name ] = { "id": objid, "name": name };
+			objstore[ objid ] = { "id": objid, "name": name };
 			// TODO: aggiungerlo alla lista di oggetti nella stanza se non c'e' gia'
 		}
 
@@ -52,10 +53,10 @@ Macro.add( 'object', {
 })
 
 
-
-Macro.add( 'setObjectProperty', {
+Macro.add( 'obj_property_set', {
 	tags     : [],
 	handler  : function () {
+		console.log( "obj_property_set" );
 		var name = this.args[ 0 ];
 		var property = this.args[ 1 ];
 
@@ -73,3 +74,31 @@ Macro.add( 'setObjectProperty', {
 	}
 })
 
+
+Macro.add( 'obj_property_do', {
+	tags     : [],
+	handler  : function () {
+		console.log( "obj_property_do" );
+		var name = this.args[ 0 ];
+		var property = this.args[ 1 ];
+
+		var objid = getObjectID( name );
+		var objstore = temporary().objects;
+		var obj = null;
+
+		console.log( "objstore = %s", JSON.stringify( objstore ) );
+		console.log( "objid in objstore = " + ( objid in objstore ) );
+
+		if ( objid in objstore )
+			obj = objstore[ objid ];
+		//else if ( objid in <inventario> ) ...   TODO: recuperare l'oggetto dall'inventario
+
+		console.log( "name = " + name + "; obj = " + obj );
+		console.log( "property name = " + property + "; obj[ property ] = " + obj[ property ] );
+		console.log( "obj && obj[ property ] = " + ( obj && obj[ property ] ) );
+		if ( obj && obj[ property ] )
+			console.log( "sono qui" );
+			var $container = $(document.createElement("span"));
+			$container.wiki( obj[ property ] ).appendTo( this.output );
+	}
+})
