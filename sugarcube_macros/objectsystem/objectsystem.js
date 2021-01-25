@@ -34,10 +34,10 @@ function getObjectID ( name ) {
 }
 
 
-Macro.add( 'obj_define', {
+Macro.add( 'obj-define', {
 	tags     : [],
 	handler  : function () {
-		console.log( "obj_define" );
+		console.log( "obj-define" );
 		var name = this.args[ 0 ];
 
 		var objid = getObjectID( name );
@@ -53,10 +53,10 @@ Macro.add( 'obj_define', {
 })
 
 
-Macro.add( 'obj_property_set', {
+Macro.add( 'obj-property-set', {
 	tags     : [],
 	handler  : function () {
-		console.log( "obj_property_set" );
+		console.log( "obj-property-set" );
 		var name = this.args[ 0 ];
 		var property = this.args[ 1 ];
 
@@ -75,30 +75,52 @@ Macro.add( 'obj_property_set', {
 })
 
 
-Macro.add( 'obj_property_do', {
+Macro.add( 'obj-property-do', {
 	tags     : [],
 	handler  : function () {
-		console.log( "obj_property_do" );
+		console.log( "obj-property-do" );
 		var name = this.args[ 0 ];
 		var property = this.args[ 1 ];
+		var linktext = this.payload[ 0 ].contents;
 
-		var objid = getObjectID( name );
-		var objstore = temporary().objects;
-		var obj = null;
+		var $link = $( document.createElement( "a" ) );
+		$link.addClass( "link-internal macro-link-anchor" );
+		$link.wiki( linktext );
+		$link.ariaClick( function (e) {
 
-		console.log( "objstore = %s", JSON.stringify( objstore ) );
-		console.log( "objid in objstore = " + ( objid in objstore ) );
+			var objid = getObjectID( name );
+			var objstore = temporary().objects;
+			var obj = null;
 
-		if ( objid in objstore )
-			obj = objstore[ objid ];
-		//else if ( objid in <inventario> ) ...   TODO: recuperare l'oggetto dall'inventario
+			console.log( "objstore = %s", JSON.stringify( objstore ) );
+			console.log( "objid in objstore = " + ( objid in objstore ) );
+		
+			if ( objid in objstore )
+				obj = objstore[ objid ];
+			//else if ( objid in <inventario> ) ...   TODO: recuperare l'oggetto dall'inventario
+		
+			console.log( "name = " + name + "; obj = " + obj );
+			console.log( "property name = " + property + "; obj[ property ] = " + obj[ property ] );
+			console.log( "obj && obj[ property ] = " + ( obj && obj[ property ] ) );
 
-		console.log( "name = " + name + "; obj = " + obj );
-		console.log( "property name = " + property + "; obj[ property ] = " + obj[ property ] );
-		console.log( "obj && obj[ property ] = " + ( obj && obj[ property ] ) );
-		if ( obj && obj[ property ] )
-			console.log( "sono qui" );
-			var $container = $(document.createElement("span"));
-			$container.wiki( obj[ property ] ).appendTo( this.output );
+			if ( obj && obj[ property ] ) {
+				var $span = $( document.createElement( "span" ) );
+				$span.wiki( obj[ property ] );
+				$span.appendTo( $( "#message" ) );
+			} else {
+				return this.error( 'obj or property is undefined' );
+			}
+		});
+		$link.appendTo( this.output );
+	}
+})
+
+
+Macro.add( 'echo', {
+	tags     : [],
+	handler  : function () {
+		console.log( "echo" );
+		var msg = this.args[ 0 ];
+		$(this.output).wiki( msg );
 	}
 })
