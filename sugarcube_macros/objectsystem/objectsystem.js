@@ -17,13 +17,18 @@
 */
 
 
+// Global inventory object used throughout the game
+variables().obj_inventory = {};
+console.log( "inventory defined: " + JSON.stringify( variables() ) );
+
+
 // This is executed before the rendering of the incoming passage
 $( document ).one( ':passagestart', function ( ev ) {
 	// create the temporary objects store
-	var objstore = temporary().objects;
+	var objstore = temporary().obj_objects;
 	if ( !objstore ) {
 		objstore = {};
-		temporary().objects = objstore;
+		temporary().obj_objects = objstore;
 	}
 });
 
@@ -34,16 +39,32 @@ function getObjectID ( name ) {
 }
 
 
+function getObject ( name ) {
+	var objid = getObjectID( name );
+	var objstore = temporary().obj_objects;
+	var inventory = variables().obj_inventory;
+	var obj = null;
+
+	console.log( "variables: " + JSON.stringify( variables() ));
+	console.log( "inventory: " + inventory );
+
+	if ( objid in objstore )
+		obj = objstore[ objid ];
+	else if ( objid in inventory )
+		obj = inventory[ objid ];
+
+	return obj;
+}
+
+
 Macro.add( 'obj-define', {
 	tags     : [],
 	handler  : function () {
-		console.log( "obj-define" );
 		var name = this.args[ 0 ];
 
-		var objid = getObjectID( name );
-		var objstore = temporary().objects;
+		var obj = getObject( name );
 
-		if ( !(name in objstore) ) {  // TODO: controllare anche che non sia nell'inventario
+		if ( !obj ) {
 			objstore[ objid ] = { "id": objid, "name": name };
 			// TODO: aggiungerlo alla lista di oggetti nella stanza se non c'e' gia'
 		}
@@ -56,17 +77,10 @@ Macro.add( 'obj-define', {
 Macro.add( 'obj-property-set', {
 	tags     : [],
 	handler  : function () {
-		console.log( "obj-property-set" );
 		var name = this.args[ 0 ];
 		var property = this.args[ 1 ];
 
-		var objid = getObjectID( name );
-		var objstore = temporary().objects;
-		var obj = null;
-
-		if ( objid in objstore )
-			obj = objstore[ objid ];
-		//else if ( objid in <inventario> ) ...   TODO: recuperare l'oggetto dall'inventario
+		var obj = getObject( name );
 
 		if ( obj )
 			obj[ property ] = this.payload[ 0 ].contents;
@@ -75,10 +89,9 @@ Macro.add( 'obj-property-set', {
 })
 
 
-Macro.add( 'obj-property-do', {
+Macro.add( 'obj-execute', {
 	tags     : [],
 	handler  : function () {
-		console.log( "obj-property-do" );
 		var name = this.args[ 0 ];
 		var property = this.args[ 1 ];
 		var linktext = this.payload[ 0 ].contents;
@@ -87,21 +100,7 @@ Macro.add( 'obj-property-do', {
 		$link.addClass( "link-internal macro-link-anchor" );
 		$link.wiki( linktext );
 		$link.ariaClick( function (e) {
-
-			var objid = getObjectID( name );
-			var objstore = temporary().objects;
-			var obj = null;
-
-			console.log( "objstore = %s", JSON.stringify( objstore ) );
-			console.log( "objid in objstore = " + ( objid in objstore ) );
-		
-			if ( objid in objstore )
-				obj = objstore[ objid ];
-			//else if ( objid in <inventario> ) ...   TODO: recuperare l'oggetto dall'inventario
-		
-			console.log( "name = " + name + "; obj = " + obj );
-			console.log( "property name = " + property + "; obj[ property ] = " + obj[ property ] );
-			console.log( "obj && obj[ property ] = " + ( obj && obj[ property ] ) );
+			var obj = getObject( name );
 
 			if ( obj && obj[ property ] ) {
 				var $span = $( document.createElement( "span" ) );

@@ -10,8 +10,9 @@
 Test object system
 
 :: Test object system
-You find yourself in a wide room with a wood table in the center. Over the table there is a <<obj-property-do "book" "examine">>book<</obj-property-do>> that looks very old.
+You find yourself in a wide room with a wooden table in the center. Over the table there is a <<obj-execute "book" "examine">>book<</obj-execute>> that looks very old.
 On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<link "door">><<echo "porta!!!">><</echo>><</link>>.
+
 
 @@#message;
 @@
