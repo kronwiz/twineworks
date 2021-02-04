@@ -18,17 +18,17 @@
 
 
 // Global inventory object used throughout the game
-variables().obj_inventory = {};
-console.log( "inventory defined: " + JSON.stringify( variables() ) );
+State.variables.obj_inventory = {};
 
 
 // This is executed before the rendering of the incoming passage
-$( document ).one( ':passagestart', function ( ev ) {
+$( document ).one( ':passagestart', function ( _ev ) {
 	// create the temporary objects store
-	var objstore = temporary().obj_objects;
+	var objstore = State.temporary.obj_objects;
+
 	if ( !objstore ) {
 		objstore = {};
-		temporary().obj_objects = objstore;
+		State.temporary.obj_objects = objstore;
 	}
 });
 
@@ -39,14 +39,16 @@ function getObjectID ( name ) {
 }
 
 
+function getPropertyID ( name ) {
+	return name.replace( / /, "_" );
+}
+
+
 function getObject ( name ) {
 	var objid = getObjectID( name );
 	var objstore = temporary().obj_objects;
 	var inventory = variables().obj_inventory;
 	var obj = null;
-
-	console.log( "variables: " + JSON.stringify( variables() ));
-	console.log( "inventory: " + inventory );
 
 	if ( objid in objstore )
 		obj = objstore[ objid ];
@@ -62,10 +64,17 @@ Macro.add( 'obj-define', {
 	handler  : function () {
 		var name = this.args[ 0 ];
 
+		var objstore = temporary().obj_objects;
 		var obj = getObject( name );
 
 		if ( !obj ) {
+			var objid = getObjectID( name );
 			objstore[ objid ] = { "id": objid, "name": name };
+
+			// This executes all the obj-property-set that might be in the obj-define content
+			for ( var i = 0, len = this.payload.length; i < len; i++ ) {
+				$( this.output ).wiki( this.payload[ i ].contents );
+			}
 			// TODO: aggiungerlo alla lista di oggetti nella stanza se non c'e' gia'
 		}
 
@@ -83,7 +92,8 @@ Macro.add( 'obj-property-set', {
 		var obj = getObject( name );
 
 		if ( obj )
-			obj[ property ] = this.payload[ 0 ].contents;
+			var propid = getPropertyID( property );
+			obj[ propid ] = this.payload[ 0 ].contents;
 
 	}
 })
@@ -99,13 +109,13 @@ Macro.add( 'obj-execute', {
 		var $link = $( document.createElement( "a" ) );
 		$link.addClass( "link-internal macro-link-anchor" );
 		$link.wiki( linktext );
-		$link.ariaClick( function (e) {
+		$link.ariaClick( function ( _ev ) {
 			var obj = getObject( name );
+			var propid = getPropertyID( property );
 
-			if ( obj && obj[ property ] ) {
-				var $span = $( document.createElement( "span" ) );
-				$span.wiki( obj[ property ] );
-				$span.appendTo( $( "#message" ) );
+			if ( obj && obj[ propid ] ) {
+				var func = functionStorage.getFunction( propid );
+				if ( func ) func( obj );
 			} else {
 				return this.error( 'obj or property is undefined' );
 			}
@@ -123,3 +133,19 @@ Macro.add( 'echo', {
 		$(this.output).wiki( msg );
 	}
 })
+
+
+var functionStorage = {
+	getFunction: function ( propid ) {
+		if ( this[ propid ] && typeof( this[ propid ] ) === "function" ) {
+			return this[ propid ];
+		}
+		else return null;
+	},
+
+	examine: function ( obj ) {
+		var $span = $( document.createElement( "span" ) );
+		$span.wiki( obj[ "examine" ] );
+		$span.appendTo( $( "#message" ) );
+	}
+}

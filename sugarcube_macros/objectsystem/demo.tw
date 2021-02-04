@@ -18,8 +18,9 @@ On the left the sun light enters through a window. The wall on the right is inte
 @@
 
 <<silently>>
-<<obj-define "book">><</obj-define>>
+<<obj-define "book">>
 <<obj-property-set "book" "examine">>It's a very old book
 <</obj-property-set>>
+<</obj-define>>
 <</silently>>
 
