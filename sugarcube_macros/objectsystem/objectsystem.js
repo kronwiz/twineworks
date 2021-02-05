@@ -20,6 +20,14 @@
 // Global inventory object used throughout the game
 State.variables.obj_inventory = {};
 
+// Default values for common properties
+State.variables.obj_default_properties = {
+	"examine": "Object description not provided",
+	"get": "You got the object",
+	"drop": "You dropped the object"
+	// ...
+};
+
 
 // This is executed before the rendering of the incoming passage
 $( document ).one( ':passagestart', function ( _ev ) {
@@ -71,6 +79,16 @@ Macro.add( 'obj-define', {
 			var objid = getObjectID( name );
 			objstore[ objid ] = { "id": objid, "name": name };
 
+			// Set default properties
+			// FIXME ----------------- DOESN'T WORK ----------------------
+			var defprops = State.variables.obj_default_properties;
+			console.log( "defprops: " + JSON.stringify( defprops ) );
+			for ( var key in defprops ) {
+				var propid = getPropertyID( key );
+				obj[ propid ] = defprops[ key ];
+				console.log( `obj defprop ${propid}: ${obj[ propid ]}` );
+			}
+
 			// This executes all the obj-property-set that might be in the obj-define content
 			for ( var i = 0, len = this.payload.length; i < len; i++ ) {
 				$( this.output ).wiki( this.payload[ i ].contents );
@@ -91,10 +109,10 @@ Macro.add( 'obj-property-set', {
 
 		var obj = getObject( name );
 
-		if ( obj )
+		if ( obj ) {
 			var propid = getPropertyID( property );
 			obj[ propid ] = this.payload[ 0 ].contents;
-
+		}
 	}
 })
 
@@ -116,8 +134,10 @@ Macro.add( 'obj-execute', {
 			if ( obj && obj[ propid ] ) {
 				var func = functionStorage.getFunction( propid );
 				if ( func ) func( obj );
+				else console.warn( `No action defined for property "${property}" of object "${name}"` );
 			} else {
-				return this.error( 'obj or property is undefined' );
+				if ( !obj ) console.warn( `Object "${name}" is undefined` );
+				else console.warn( `Property "${property}" is undefined` );
 			}
 		});
 		$link.appendTo( this.output );
@@ -146,6 +166,6 @@ var functionStorage = {
 	examine: function ( obj ) {
 		var $span = $( document.createElement( "span" ) );
 		$span.wiki( obj[ "examine" ] );
-		$span.appendTo( $( "#message" ) );
+		$span.appendTo( $( "#messagebox" ) );
 	}
 }

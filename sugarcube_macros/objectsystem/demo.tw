@@ -14,7 +14,7 @@ You find yourself in a wide room with a wooden table in the center. Over the tab
 On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<link "door">><<echo "porta!!!">><</echo>><</link>>.
 
 
-@@#message;
+@@#messagebox;
 @@
 
 <<silently>>
