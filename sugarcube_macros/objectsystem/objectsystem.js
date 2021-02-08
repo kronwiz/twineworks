@@ -72,15 +72,17 @@ Macro.add( 'obj-define', {
 	handler  : function () {
 		var name = this.args[ 0 ];
 
-		var objstore = temporary().obj_objects;
+		if ( !name ) return this.error( 'obj-define: missing object name' );
+
+		var objstore = State.temporary.obj_objects;
 		var obj = getObject( name );
 
 		if ( !obj ) {
 			var objid = getObjectID( name );
-			objstore[ objid ] = { "id": objid, "name": name };
+			obj = { "id": objid, "name": name };
+			objstore[ objid ] = obj;
 
 			// Set default properties
-			// FIXME ----------------- DOESN'T WORK ----------------------
 			var defprops = State.variables.obj_default_properties;
 			console.log( "defprops: " + JSON.stringify( defprops ) );
 			for ( var key in defprops ) {
@@ -107,6 +109,9 @@ Macro.add( 'obj-property-set', {
 		var name = this.args[ 0 ];
 		var property = this.args[ 1 ];
 
+		if ( !name ) return this.error( 'obj-define: missing object name' );
+		if ( !property ) return this.error( 'obj-define: missing property name' );
+
 		var obj = getObject( name );
 
 		if ( obj ) {
@@ -124,6 +129,9 @@ Macro.add( 'obj-execute', {
 		var property = this.args[ 1 ];
 		var linktext = this.payload[ 0 ].contents;
 
+		if ( !name ) return this.error( 'obj-define: missing object name' );
+		if ( !property ) return this.error( 'obj-define: missing property name' );
+
 		var $link = $( document.createElement( "a" ) );
 		$link.addClass( "link-internal macro-link-anchor" );
 		$link.wiki( linktext );
@@ -137,7 +145,7 @@ Macro.add( 'obj-execute', {
 				else console.warn( `No action defined for property "${property}" of object "${name}"` );
 			} else {
 				if ( !obj ) console.warn( `Object "${name}" is undefined` );
-				else console.warn( `Property "${property}" is undefined` );
+				else console.warn( `Property "${property}" of object "${name}" is undefined` );
 			}
 		});
 		$link.appendTo( this.output );
