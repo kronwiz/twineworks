@@ -41,6 +41,17 @@ $( document ).one( ':passagestart', function ( _ev ) {
 });
 
 
+function generateUUID () {
+    var d = new Date().getTime();
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = (d + Math.random()*16)%16 | 0;
+        d = Math.floor(d/16);
+        return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+    });
+    return uuid;
+};
+
+
 function getObjectID ( name ) {
 	// to avoid conflicts the object ID is <passage ID> + "_" + <obj name with spaces replaced>
 	return Story.get( State.passage ).domId + "_" + name.replace( / /, "_" );
@@ -172,8 +183,16 @@ var functionStorage = {
 	},
 
 	examine: function ( obj ) {
+		var $prompt = $( document.createElement( "div" ) );
+		var promptid = "objprompt" + generateUUID();
+		$prompt.attr( "id", promptid );
+		$prompt.wiki( `<<obj-execute "${obj["name"]}" "examine">>X<</obj-execute>>&nbsp;\
+		<<obj-execute "${obj["name"]}" "get">>G<</obj-execute>>&nbsp;\
+		<<obj-execute "${obj["name"]}" "drop">>D<</obj-execute>>&nbsp;\
+		''> Examine ${obj["name"]}''` );
 		var $span = $( document.createElement( "span" ) );
-		$span.wiki( obj[ "examine" ] );
+		$span.wiki( obj[ "examine" ] + "<p/>" );
+		$prompt.appendTo( $( "#messagebox" ) );
 		$span.appendTo( $( "#messagebox" ) );
 	}
 }
