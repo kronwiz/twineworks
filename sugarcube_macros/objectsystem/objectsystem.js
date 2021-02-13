@@ -93,6 +93,7 @@ Macro.add( 'obj-define', {
 			obj = { "id": objid, "name": name };
 			objstore[ objid ] = obj;
 
+			/* No more needed - Will be removed
 			// Set default properties
 			var defprops = State.variables.obj_default_properties;
 			console.log( "defprops: " + JSON.stringify( defprops ) );
@@ -101,6 +102,7 @@ Macro.add( 'obj-define', {
 				obj[ propid ] = defprops[ key ];
 				console.log( `obj defprop ${propid}: ${obj[ propid ]}` );
 			}
+			*/
 
 			// This executes all the obj-property-set that might be in the obj-define content
 			for ( var i = 0, len = this.payload.length; i < len; i++ ) {
@@ -120,8 +122,8 @@ Macro.add( 'obj-property-set', {
 		var name = this.args[ 0 ];
 		var property = this.args[ 1 ];
 
-		if ( !name ) return this.error( 'obj-define: missing object name' );
-		if ( !property ) return this.error( 'obj-define: missing property name' );
+		if ( !name ) return this.error( 'obj-property-set: missing object name' );
+		if ( !property ) return this.error( 'obj-property-set: missing property name' );
 
 		var obj = getObject( name );
 
@@ -140,8 +142,8 @@ Macro.add( 'obj-execute', {
 		var property = this.args[ 1 ];
 		var linktext = this.payload[ 0 ].contents;
 
-		if ( !name ) return this.error( 'obj-define: missing object name' );
-		if ( !property ) return this.error( 'obj-define: missing property name' );
+		if ( !name ) return this.error( 'obj-execute: missing object name' );
+		if ( !property ) return this.error( 'obj-execute: missing property name' );
 
 		var $link = $( document.createElement( "a" ) );
 		$link.addClass( "link-internal macro-link-anchor" );
@@ -150,7 +152,7 @@ Macro.add( 'obj-execute', {
 			var obj = getObject( name );
 			var propid = getPropertyID( property );
 
-			if ( obj && obj[ propid ] ) {
+			if ( obj ) {
 				var func = functionStorage.getFunction( propid );
 				if ( func ) func( obj );
 				else console.warn( `No action defined for property "${property}" of object "${name}"` );
@@ -164,14 +166,46 @@ Macro.add( 'obj-execute', {
 })
 
 
-Macro.add( 'echo', {
+Macro.add( 'obj-if-in-inventory-set', {
 	tags     : [],
 	handler  : function () {
-		console.log( "echo" );
-		var msg = this.args[ 0 ];
-		$(this.output).wiki( msg );
+		var objname = this.args[ 0 ];
+		var varname = this.args[ 1 ];
+
+		var objid = getObjectID( objname );
+		var res = ( objid in State.variables.obj_inventory );
+		if ( varname.search( /^\$/ ) ) State.variables.varname = res;
+		else if ( varname.search( /^_/ ) ) State.temporary.varname = res;
 	}
 })
+
+
+function outputProperty ( obj, propid, promptText ) {
+	// prompt row with a unique ID
+	var $prompt = $( document.createElement( "div" ) );
+	var promptid = "objprompt" + generateUUID();
+	$prompt.attr( "id", promptid );
+	// content of the prompt
+	$prompt.wiki( `<<obj-execute "${obj["name"]}" "examine">>X<</obj-execute>>\
+	<<obj-execute "${obj["name"]}" "get">>G<</obj-execute>>\
+	<<obj-execute "${obj["name"]}" "drop">>D<</obj-execute>>\
+	''> ${promptText}''` );
+
+	// row with the property content
+	var $content = $( document.createElement( "div" ) );
+	var prop_text = obj[ propid ] ? obj[ propid ] : State.variables.obj_default_properties[ propid ];
+	if ( !prop_text ) prop_text = `No property "${propid}" defined for object "${obj["name"]}"`;
+	$content.wiki( prop_text + "<p/>" );
+
+	// script element to move the new prompt into view
+	var $script = $( document.createElement( "script" ) );
+	$script.text( `$( "#${promptid}" )[0].scrollIntoView()` );
+
+	// append everything to the #messagebox element
+	$prompt.appendTo( $( "#messagebox" ) );
+	$content.appendTo( $( "#messagebox" ) );
+	$script.appendTo( $( "#messagebox" ) );
+}
 
 
 var functionStorage = {
@@ -182,17 +216,16 @@ var functionStorage = {
 		else return null;
 	},
 
-	examine: function ( obj ) {
-		var $prompt = $( document.createElement( "div" ) );
-		var promptid = "objprompt" + generateUUID();
-		$prompt.attr( "id", promptid );
-		$prompt.wiki( `<<obj-execute "${obj["name"]}" "examine">>X<</obj-execute>>&nbsp;\
-		<<obj-execute "${obj["name"]}" "get">>G<</obj-execute>>&nbsp;\
-		<<obj-execute "${obj["name"]}" "drop">>D<</obj-execute>>&nbsp;\
-		''> Examine ${obj["name"]}''` );
-		var $span = $( document.createElement( "span" ) );
-		$span.wiki( obj[ "examine" ] + "<p/>" );
-		$prompt.appendTo( $( "#messagebox" ) );
-		$span.appendTo( $( "#messagebox" ) );
+	examine: function( obj ) {
+		outputProperty( obj, "examine", `Examine ${obj["name"]}` );
+	},
+
+	get: function( obj ) {
+		State.variables.obj_inventory[ obj[ "id" ] ] = obj;
+		delete State.temporary.obj_objects[ obj[ "id" ] ];
+		outputProperty( obj, "get", `Get ${obj["name"]}` );
+
+		//console.log( "inventory: " + JSON.stringify( State.variables.obj_inventory ) );
+		//console.log( "temp objects: " + JSON.stringify( State.temporary.obj_objects ) );
 	}
 }

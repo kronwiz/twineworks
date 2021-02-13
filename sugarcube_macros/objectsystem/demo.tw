@@ -11,7 +11,7 @@ Test object system
 
 :: Test object system
 You find yourself in a wide room with a wooden table in the center. Over the table there is a <<obj-execute "book" "examine">>book<</obj-execute>> that looks very old.
-On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<link "door">><<echo "porta!!!">><</echo>><</link>>.
+On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<obj-execute "door" "examine">>door<</obj-execute>>.
 
 
 @@#messagebox;
@@ -21,6 +21,11 @@ On the left the sun light enters through a window. The wall on the right is inte
 <<obj-define "book">>
 <<obj-property-set "book" "examine">>It's a very old book
 <</obj-property-set>>
+<<obj-property-set "book" "get">>You got the beatiful book
+<</obj-property-set>>
+<</obj-define>>
+
+<<obj-define "door">>
 <</obj-define>>
 <</silently>>
 
