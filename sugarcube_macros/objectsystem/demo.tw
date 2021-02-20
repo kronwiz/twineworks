@@ -2,6 +2,7 @@
 {
     "ifid": "7E84F760-498F-4832-80B5-5DC61EC86407",
     "format": "SugarCube",
+    "format-version": "2.34.1",
     "start": "Test object system",
     "zoom": 1
 }
@@ -18,8 +19,11 @@ On the left the sun light enters through a window. The wall on the right is inte
 @@
 
 <<silently>>
+<<obj-default-property-set "get" "Prendi">>Hai preso l'oggetto
+<</obj-default-property-set>>
+
 <<obj-define "book">>
-<<obj-property-set "book" "examine">>It's a very old book
+<<obj-property-set "book" "examine" "Examine">>It's a very old book
 <</obj-property-set>>
 <<obj-property-set "book" "get">>You got the beatiful book
 <</obj-property-set>>

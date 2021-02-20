@@ -22,10 +22,15 @@ State.variables.obj_inventory = {};
 
 // Default values for common properties
 State.variables.obj_default_properties = {
-	"examine": "Object description not provided",
-	"get": "You got the object",
-	"drop": "You dropped the object"
+	"examine": { prompt: "Examine", content: "@@color:red;Object description not provided@@" },
+	"get": { prompt: "Get", content: "You got the object" },
+	"have": { prompt: "Get", content: "The object is already in your inventory" },
+	"drop": { prompt: "Drop", content: "You dropped the object" },
+	"not-have": { prompt: "Drop", content: "You don't have the object in your inventory" },
 	// ...
+
+	// if the requested property is not defined we use this to display an error message
+	"obj-property-undefined": { prompt: "@@color:red;!!Missing prompt!!@@", content: '@@color:red;No property "__property__" defined for object "__object__"@@' }
 };
 
 
@@ -54,12 +59,12 @@ function generateUUID () {
 
 function getObjectID ( name ) {
 	// to avoid conflicts the object ID is <passage ID> + "_" + <obj name with spaces replaced>
-	return Story.get( State.passage ).domId + "_" + name.replace( / /, "_" );
+	return Story.get( State.passage ).domId + "_" + name.trim().replace( / /, "_" );
 }
 
 
 function getPropertyID ( name ) {
-	return name.replace( / /, "_" );
+	return name.trim().replace( / /, "_" );
 }
 
 
@@ -93,17 +98,6 @@ Macro.add( 'obj-define', {
 			obj = { "id": objid, "name": name };
 			objstore[ objid ] = obj;
 
-			/* No more needed - Will be removed
-			// Set default properties
-			var defprops = State.variables.obj_default_properties;
-			console.log( "defprops: " + JSON.stringify( defprops ) );
-			for ( var key in defprops ) {
-				var propid = getPropertyID( key );
-				obj[ propid ] = defprops[ key ];
-				console.log( `obj defprop ${propid}: ${obj[ propid ]}` );
-			}
-			*/
-
 			// This executes all the obj-property-set that might be in the obj-define content
 			for ( var i = 0, len = this.payload.length; i < len; i++ ) {
 				$( this.output ).wiki( this.payload[ i ].contents );
@@ -120,16 +114,19 @@ Macro.add( 'obj-property-set', {
 	tags     : [],
 	handler  : function () {
 		var name = this.args[ 0 ];
-		var property = this.args[ 1 ];
+		var propertyName = this.args[ 1 ];
+		var prompt = this.args[ 2 ];
 
 		if ( !name ) return this.error( 'obj-property-set: missing object name' );
-		if ( !property ) return this.error( 'obj-property-set: missing property name' );
+		if ( !propertyName ) return this.error( 'obj-property-set: missing property name' );
+		// if not specified, the prompt is equal to the property name with the first letter capitalized
+		if ( !prompt ) prompt = propertyName.trim().replace( /^\w/, (c) => c.toUpperCase() );
 
 		var obj = getObject( name );
 
 		if ( obj ) {
-			var propid = getPropertyID( property );
-			obj[ propid ] = this.payload[ 0 ].contents;
+			var propid = getPropertyID( propertyName );
+			obj[ propid ] = { prompt: prompt, content: this.payload[ 0 ].contents };
 		}
 	}
 })
@@ -139,29 +136,50 @@ Macro.add( 'obj-execute', {
 	tags     : [],
 	handler  : function () {
 		var name = this.args[ 0 ];
-		var property = this.args[ 1 ];
+		var propertyName = this.args[ 1 ];
 		var linktext = this.payload[ 0 ].contents;
 
 		if ( !name ) return this.error( 'obj-execute: missing object name' );
-		if ( !property ) return this.error( 'obj-execute: missing property name' );
+		if ( !propertyName ) return this.error( 'obj-execute: missing property name' );
 
 		var $link = $( document.createElement( "a" ) );
 		$link.addClass( "link-internal macro-link-anchor" );
 		$link.wiki( linktext );
 		$link.ariaClick( function ( _ev ) {
 			var obj = getObject( name );
-			var propid = getPropertyID( property );
+			var propid = getPropertyID( propertyName );
 
 			if ( obj ) {
 				var func = functionStorage.getFunction( propid );
 				if ( func ) func( obj );
-				else console.warn( `No action defined for property "${property}" of object "${name}"` );
+				else console.warn( `No action defined for property "${propertyName}" of object "${name}"` );
 			} else {
 				if ( !obj ) console.warn( `Object "${name}" is undefined` );
-				else console.warn( `Property "${property}" of object "${name}" is undefined` );
+				else console.warn( `Property "${propertyName}" of object "${name}" is undefined` );
 			}
 		});
 		$link.appendTo( this.output );
+	}
+})
+
+/** @function  obj-default-property-set
+ *  Sets the default value for a property. The property content is taken from the macro payload.
+ *  @param {string} propertyName - Name of the property to set.
+ *  @param {string} [prompt] - Text appearing as a prompt when the action is executed. If not specified it's equal to the property name with the first letter capitalized.
+ *  @throws Returns an error if the property name is missing.
+*/
+Macro.add( 'obj-default-property-set', {
+	tags     : [],
+	handler  : function () {
+		var propertyName = this.args[ 0 ];
+		var prompt = this.args[ 1 ];
+
+		if ( !propertyName ) return this.error( 'obj-default-property-set: missing property name' );
+		// if not specified, the prompt is equal to the property name with the first letter capitalized
+		if ( !prompt ) prompt = propertyName.trim().replace( /^\w/, (c) => c.toUpperCase() );
+
+		var propid = getPropertyID( propertyName );
+		State.variables.obj_default_properties[ propid ] = { prompt: prompt, content: this.payload[ 0 ].contents };
 	}
 })
 
@@ -180,22 +198,23 @@ Macro.add( 'obj-if-in-inventory-set', {
 })
 
 
-function outputProperty ( obj, propid, promptText ) {
+function outputProperty ( obj, propid ) {
+	var property = obj[ propid ] ? obj[ propid ] : State.variables.obj_default_properties[ propid ];
+	if ( !property ) property = State.variables.obj_default_properties[ "obj-property-undefined" ].replace( "__property__", propid ).replace( "__object__", obj.name );
+
 	// prompt row with a unique ID
 	var $prompt = $( document.createElement( "div" ) );
 	var promptid = "objprompt" + generateUUID();
 	$prompt.attr( "id", promptid );
 	// content of the prompt
-	$prompt.wiki( `<<obj-execute "${obj["name"]}" "examine">>X<</obj-execute>>\
-	<<obj-execute "${obj["name"]}" "get">>G<</obj-execute>>\
-	<<obj-execute "${obj["name"]}" "drop">>D<</obj-execute>>\
-	''> ${promptText}''` );
+	$prompt.wiki( `<<obj-execute "${obj.name}" "examine">>X<</obj-execute>>\
+	<<obj-execute "${obj.name}" "get">>G<</obj-execute>>\
+	<<obj-execute "${obj.name}" "drop">>D<</obj-execute>>\
+	''> ${property.prompt} ${obj.name}''` );
 
 	// row with the property content
 	var $content = $( document.createElement( "div" ) );
-	var prop_text = obj[ propid ] ? obj[ propid ] : State.variables.obj_default_properties[ propid ];
-	if ( !prop_text ) prop_text = `No property "${propid}" defined for object "${obj["name"]}"`;
-	$content.wiki( prop_text + "<p/>" );
+	$content.wiki( property.content + "<p/>" );
 
 	// script element to move the new prompt into view
 	var $script = $( document.createElement( "script" ) );
@@ -217,15 +236,33 @@ var functionStorage = {
 	},
 
 	examine: function( obj ) {
-		outputProperty( obj, "examine", `Examine ${obj["name"]}` );
+		outputProperty( obj, "examine" );
 	},
 
 	get: function( obj ) {
-		State.variables.obj_inventory[ obj[ "id" ] ] = obj;
-		delete State.temporary.obj_objects[ obj[ "id" ] ];
-		outputProperty( obj, "get", `Get ${obj["name"]}` );
+		if ( !State.variables.obj_inventory[ obj.id ] ) {
+			// move the object to the inventory
+			State.variables.obj_inventory[ obj.id ] = obj;
+			delete State.temporary.obj_objects[ obj.id ];
+			outputProperty( obj, "get" );
+		} else {
+			// the object is already in the inventory
+			outputProperty( obj, "have" );
+		}
 
 		//console.log( "inventory: " + JSON.stringify( State.variables.obj_inventory ) );
 		//console.log( "temp objects: " + JSON.stringify( State.temporary.obj_objects ) );
+	},
+
+	drop: function( obj ) {
+		if ( State.variables.obj_inventory[ obj.id ] ) {
+			// move the object out of the inventory
+			State.temporary.obj_objects[ obj.id ] = obj;
+			delete State.variables.obj_inventory[ obj.id ];
+			outputProperty( obj, "drop" );
+		} else {
+			// the object is not in the inventory
+			outputProperty( obj, "not-have" );
+		}
 	}
 }
