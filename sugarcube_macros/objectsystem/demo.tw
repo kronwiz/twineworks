@@ -19,13 +19,13 @@ On the left the sun light enters through a window. The wall on the right is inte
 @@
 
 <<silently>>
-<<obj-default-property-set "get" "Prendi">>Hai preso l'oggetto
+<<obj-default-property-set "get-message">>Hai preso l'oggetto
 <</obj-default-property-set>>
 
 <<obj-define "book">>
-<<obj-property-set "book" "examine" "Examine">>It's a very old book
+<<obj-property-set "book" "examine-message">>It's a very old book
 <</obj-property-set>>
-<<obj-property-set "book" "get">>You got the beatiful book
+<<obj-property-set "book" "get-message">>You got the beatiful book
 <</obj-property-set>>
 <</obj-define>>
 
