@@ -17,8 +17,57 @@
 */
 
 
+/** Inventory class */
+class ObjSysInventory {
+	/**
+	 * Create an inventory.
+	 */
+	constructor () {
+		this.objects = {};
+	}
+
+	/**
+	 * Add an object to the inventory.
+	 * @param {ObjSysObject} obj - Object to be added.
+	 */
+	addObject ( obj ) {
+		this.objects[ obj.name ] = obj;
+	}
+
+	/**
+	 * Return the object with the specified name.
+	 * @param {string} name - Name of the object.
+	 * @returns {ObjSysObject} The object with the given name or undefined if there's no such object.
+	 */
+	getObject ( name ) {
+		return this.objects[ name ];
+	}
+
+	/**
+	 * Return a boolean indicating if the inventory contains the object or not.
+	 * @param {string} name - Name of the object.
+	 * @returns {boolean} true if the object is in the inventory or false otherwise.
+	 */
+	hasObject ( name ) {
+		return ( name in this.objects );
+	}
+
+	/**
+	 * Remove an object from the inventory.
+	 * @param {string or ObjSysObject} obj_or_name - The name of the object or an instance of ObjSysObject to be removed.
+	 */
+	deleteObject ( obj_or_name ) {
+		var name = null;
+		if ( typeof( obj_or_name ) === "string" ) name = obj_or_name;
+		else name = obj_or_name.name;
+
+		delete this.objects[ name ];
+	}
+}
+
+
 // Global inventory object used throughout the game
-State.variables.obj_inventory = {};
+State.variables.obj_inventory = new ObjSysInventory;
 
 // Default values for common properties
 State.variables.obj_default_properties = {
@@ -80,10 +129,8 @@ function getObject ( name ) {
 	var inventory = variables().obj_inventory;
 	var obj = null;
 
-	if ( name in objstore )
-		obj = objstore[ name ];
-	else if ( name in inventory )
-		obj = inventory[ name ];
+	if ( name in objstore ) obj = objstore[ name ];
+	else if ( inventory.hasObject( name ) )	obj = inventory.getObject( name );
 
 	return obj;
 }
@@ -271,9 +318,9 @@ class ObjSysObject {
 	}
 
 	get () {
-		if ( !State.variables.obj_inventory[ this.name ] ) {
+		if ( !State.variables.obj_inventory.hasObject( this.name ) ) {
 			// move the object to the inventory
-			State.variables.obj_inventory[ this.name ] = this;
+			State.variables.obj_inventory.addObject( this );
 			delete State.temporary.obj_objects[ this.name ];
 			outputProperty( this, "get-message", "get-prompt" );
 		} else {
@@ -286,10 +333,10 @@ class ObjSysObject {
 	}
 
 	drop () {
-		if ( State.variables.obj_inventory[ this.name ] ) {
+		if ( State.variables.obj_inventory.hasObject( this.name ) ) {
 			// move the object out of the inventory
 			State.temporary.obj_objects[ this.name ] = this;
-			delete State.variables.obj_inventory[ this.name];
+			State.variables.obj_inventory.deleteObject( this.name );
 			outputProperty( this, "drop-message", "drop-prompt" );
 		} else {
 			// the object is not in the inventory
@@ -314,3 +361,4 @@ class ObjSysAction {
 		this.value = value;
 	}
 }
+
