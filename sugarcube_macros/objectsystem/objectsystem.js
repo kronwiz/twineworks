@@ -16,6 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+(function () { // namespace isolation
 
 /** Inventory class */
 class ObjSysInventory {
@@ -63,11 +64,26 @@ class ObjSysInventory {
 
 		delete this.objects[ name ];
 	}
+
+	transferObjectFrom ( name, from_inventory ) {
+		if ( this.hasObject( name ) ) {
+			console.log( `This inventory already has object ${name}` );
+			return null;
+		}
+
+		var obj = from_inventory.getObject( name );
+		if ( obj ) {
+			this.addObject( obj );
+			from_inventory.deleteObject( obj );
+			return obj;
+		}
+		else {
+			console.log( `Starting inventory has no object ${name}` );
+			return null;
+		}
+	}
 }
 
-
-// Global inventory object used throughout the game
-State.variables.obj_inventory = new ObjSysInventory;
 
 // Default values for common properties
 State.variables.obj_default_properties = {
@@ -91,13 +107,14 @@ State.variables.obj_default_properties = {
 
 // This is executed before the rendering of the incoming passage
 $( document ).one( ':passagestart', function ( _ev ) {
+	// create the global inventory object used throughout the game.
+	// Need to find a better place, but doing it outside of a function doesn't work.
+	var inventory = State.variables.obj_inventory;
+	if ( !inventory ) State.variables.obj_inventory = new ObjSysInventory();
+
 	// create the temporary objects store
 	var objstore = State.temporary.obj_objects;
-
-	if ( !objstore ) {
-		objstore = {};
-		State.temporary.obj_objects = objstore;
-	}
+	if ( !objstore ) State.temporary.obj_objects = new ObjSysInventory();
 });
 
 
@@ -125,11 +142,11 @@ function getPropertyID ( name ) {
 
 
 function getObject ( name ) {
-	var objstore = temporary().obj_objects;
-	var inventory = variables().obj_inventory;
+	var objstore = State.temporary.obj_objects;
+	var inventory = State.variables.obj_inventory;
 	var obj = null;
 
-	if ( name in objstore ) obj = objstore[ name ];
+	if ( objstore.hasObject( name ) ) obj = objstore.getObject( name );
 	else if ( inventory.hasObject( name ) )	obj = inventory.getObject( name );
 
 	return obj;
@@ -151,7 +168,7 @@ Macro.add( 'obj-define', {
 		   "obj-define" instructions aren't reexecuted because the objects already exist */
 		if ( !obj ) {
 			obj = new ObjSysObject( name );
-			objstore[ obj.name ] = obj;
+			objstore.addObject( obj );
 
 			// This executes all the obj-property-set that might be in the obj-define content
 			for ( var i = 0, len = this.payload.length; i < len; i++ ) {
@@ -224,16 +241,28 @@ Macro.add( 'obj-default-property-set', {
 })
 
 
-Macro.add( 'obj-if-in-inventory-set', {
-	tags     : [],
+Macro.add( 'pickup', {
+	// no tags: self closing macro element
 	handler  : function () {
-		var objname = this.args[ 0 ];
-		var varname = this.args[ 1 ];
+		var name = this.args[ 0 ];
 
-		var objid = getObjectID( objname );
-		var res = ( objid in State.variables.obj_inventory );
-		if ( varname.search( /^\$/ ) ) State.variables.varname = res;
-		else if ( varname.search( /^_/ ) ) State.temporary.varname = res;
+		if ( !name ) return this.error( 'pickup: missing object name' );
+
+		var obj = getObject( name );
+		var inventory = State.variables.obj_inventory;
+
+		// TODO: controllare se l'oggetto permette di essere raccolto
+
+		if ( inventory.hasObject( name ) ) {
+			outputProperty( obj, "have-message", "have-prompt" );
+			return;
+		}
+
+		if ( inventory.transferObjectFrom( name, State.temporary.obj_objects ) ) {
+			outputProperty( obj, "get-message", "get-prompt" );
+			// executes obj hook when the transfer has executed successfully
+			if ( obj.pickup ) obj.pickup();
+		}
 	}
 })
 
@@ -256,7 +285,7 @@ function outputProperty ( obj, name, title ) {
 	$prompt.attr( "id", promptid );
 	// content of the prompt
 	$prompt.wiki( `<<obj-execute "${obj.name}" "examine">>X<</obj-execute>>\
-	<<obj-execute "${obj.name}" "get">>G<</obj-execute>>\
+	<<link "G">><<pickup "${obj.name}">><</link>>\
 	<<obj-execute "${obj.name}" "drop">>D<</obj-execute>>\
 	''> ${promptText} ${obj.name}''` );
 
@@ -321,7 +350,7 @@ class ObjSysObject {
 		if ( !State.variables.obj_inventory.hasObject( this.name ) ) {
 			// move the object to the inventory
 			State.variables.obj_inventory.addObject( this );
-			delete State.temporary.obj_objects[ this.name ];
+			State.temporary.obj_objects.deleteObject( this.name );
 			outputProperty( this, "get-message", "get-prompt" );
 		} else {
 			// the object is already in the inventory
@@ -335,7 +364,7 @@ class ObjSysObject {
 	drop () {
 		if ( State.variables.obj_inventory.hasObject( this.name ) ) {
 			// move the object out of the inventory
-			State.temporary.obj_objects[ this.name ] = this;
+			State.temporary.obj_objects.addObject( this );
 			State.variables.obj_inventory.deleteObject( this.name );
 			outputProperty( this, "drop-message", "drop-prompt" );
 		} else {
@@ -362,3 +391,5 @@ class ObjSysAction {
 	}
 }
 
+
+}());  // end of namespace
