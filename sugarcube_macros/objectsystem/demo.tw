@@ -11,8 +11,8 @@
 Test object system
 
 :: Test object system
-You find yourself in a wide room with a wooden table in the center. Over the table there is a <<obj-execute "book" "examine">>book<</obj-execute>> that looks very old.
-On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<obj-execute "door" "examine">>door<</obj-execute>>.
+You find yourself in a wide room with a wooden table in the center. Over the table there is a <<link "book">><<examine "book">><</link>> that looks very old.
+On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<link "door">><<examine "door">><</link>>.
 
 Pick up <<link "book">><<pickup "book">><</link>>.
 

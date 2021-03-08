@@ -214,7 +214,7 @@ Macro.add( 'obj-execute', {
 			var obj = getObject( name );
 
 			if ( obj ) {
-				var func = obj.getAction( actionName );
+				var func = obj.getActionValue( actionName );
 				if ( func ) func();
 				else console.warn( `No action ${actionName} defined for object "${name}"` );
 			}
@@ -241,6 +241,26 @@ Macro.add( 'obj-default-property-set', {
 })
 
 
+Macro.add( 'examine', {
+	// no tags: self closing macro element
+	handler  : function () {
+		var name = this.args[ 0 ];
+
+		if ( !name ) return this.error( 'examine: missing object name' );
+
+		var obj = getObject( name );
+
+		if ( !obj ) {
+			console.warn( `examine: object ${name} not defined` );
+			return;
+		}
+
+		outputProperty( obj, "examine-message", "examine-prompt" );
+		if ( obj.examine ) obj.examine();
+	}
+})
+
+
 Macro.add( 'pickup', {
 	// no tags: self closing macro element
 	handler  : function () {
@@ -251,7 +271,13 @@ Macro.add( 'pickup', {
 		var obj = getObject( name );
 		var inventory = State.variables.obj_inventory;
 
-		// TODO: controllare se l'oggetto permette di essere raccolto
+		if ( obj ) {
+			// TODO: controllare se l'oggetto permette di essere raccolto
+		}
+		else {
+			console.warn( `pickup: object ${name} not defined` );
+			return;
+		}
 
 		if ( inventory.hasObject( name ) ) {
 			outputProperty( obj, "have-message", "have-prompt" );
@@ -267,15 +293,44 @@ Macro.add( 'pickup', {
 })
 
 
+Macro.add( 'drop', {
+	// no tags: self closing macro element
+	handler  : function () {
+		var name = this.args[ 0 ];
+
+		if ( !name ) return this.error( 'drop: missing object name' );
+
+		var obj = getObject( name );
+		var objstore = State.temporary.obj_objects;
+
+		if ( !obj ) {
+			console.warn( `drop: object ${name} not defined` );
+			return;
+		}
+
+		if ( !State.variables.obj_inventory.hasObject( name ) ) {
+			outputProperty( obj, "not-have-message", "not-have-prompt" );
+			return;
+		}
+
+		if ( objstore.transferObjectFrom( name, State.variables.obj_inventory ) ) {
+			outputProperty( obj, "drop-message", "drop-prompt" );
+			// executes obj hook when the transfer has executed successfully
+			if ( obj.drop ) obj.drop();
+		}
+	}
+})
+
+
 function outputProperty ( obj, name, title ) {
 	// get property from object
-	var property = obj.getProperty( name );
+	var property = obj.getPropertyValue( name );
 	// if missing get property from defaults
 	if ( !property ) property = State.variables.obj_default_properties[ name ];
 	// if missing get property undefined message
 	if ( !property ) property = State.variables.obj_default_properties[ "obj-property-undefined-message" ].replace( "__property__", name ).replace( "__object__", obj.name );
 
-	var promptText = obj.getProperty( title );
+	var promptText = obj.getPropertyValue( title );
 	if ( !promptText ) promptText = State.variables.obj_default_properties[ title ];
 	if ( !promptText ) promptText = State.variables.obj_default_properties[ "obj-property-undefined-prompt" ].replace( "__property__", name ).replace( "__object__", obj.name );
 
@@ -286,7 +341,7 @@ function outputProperty ( obj, name, title ) {
 	// content of the prompt
 	$prompt.wiki( `<<obj-execute "${obj.name}" "examine">>X<</obj-execute>>\
 	<<link "G">><<pickup "${obj.name}">><</link>>\
-	<<obj-execute "${obj.name}" "drop">>D<</obj-execute>>\
+	<<link "D">><<drop "${obj.name}">><</link>>\
 	''> ${promptText} ${obj.name}''` );
 
 	// row with the property content
@@ -310,15 +365,13 @@ class ObjSysObject {
 
 		this.properties = {};
 		this.actions = {};
-
-		this.addNativeActions();
 	}
 
 	setProperty ( name, value ) {
 		this.properties[ name ] = new ObjSysProperty( name, value );
 	}
 
-	getProperty ( name ) {
+	getPropertyValue ( name ) {
 		var prop = this.properties[ name ];
 		if ( prop ) return prop.value;
 		else return null;
@@ -328,49 +381,10 @@ class ObjSysObject {
 		this.actions[ name ] = new ObjSysAction( name, type, value );
 	}
 
-	getAction ( name ) {
+	getActionValue ( name ) {
 		var action = this.actions[ name ];
 		if ( action ) return action.value;  // Note: this works only for native actions
 		else return null;
-	}
-
-	addNativeActions () {
-		this.setAction( "examine", "native", this.examine.bind( this ) );
-		this.setAction( "get", "native", this.get.bind( this ) );
-		this.setAction( "drop", "native", this.drop.bind( this ) );
-	}
-
-	/* Native actions */
-
-	examine () {
-		outputProperty( this, "examine-message", "examine-prompt" );
-	}
-
-	get () {
-		if ( !State.variables.obj_inventory.hasObject( this.name ) ) {
-			// move the object to the inventory
-			State.variables.obj_inventory.addObject( this );
-			State.temporary.obj_objects.deleteObject( this.name );
-			outputProperty( this, "get-message", "get-prompt" );
-		} else {
-			// the object is already in the inventory
-			outputProperty( this, "have-message", "have-prompt" );
-		}
-
-		//console.log( "inventory: " + JSON.stringify( State.variables.obj_inventory ) );
-		//console.log( "temp objects: " + JSON.stringify( State.temporary.obj_objects ) );
-	}
-
-	drop () {
-		if ( State.variables.obj_inventory.hasObject( this.name ) ) {
-			// move the object out of the inventory
-			State.temporary.obj_objects.addObject( this );
-			State.variables.obj_inventory.deleteObject( this.name );
-			outputProperty( this, "drop-message", "drop-prompt" );
-		} else {
-			// the object is not in the inventory
-			outputProperty( this, "not-have-message", "not-have-prompt" );
-		}
 	}
 }
 
