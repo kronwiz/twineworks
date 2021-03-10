@@ -18,71 +18,6 @@
 
 (function () { // namespace isolation
 
-/** Inventory class */
-class ObjSysInventory {
-	/**
-	 * Create an inventory.
-	 */
-	constructor () {
-		this.objects = {};
-	}
-
-	/**
-	 * Add an object to the inventory.
-	 * @param {ObjSysObject} obj - Object to be added.
-	 */
-	addObject ( obj ) {
-		this.objects[ obj.name ] = obj;
-	}
-
-	/**
-	 * Return the object with the specified name.
-	 * @param {string} name - Name of the object.
-	 * @returns {ObjSysObject} The object with the given name or undefined if there's no such object.
-	 */
-	getObject ( name ) {
-		return this.objects[ name ];
-	}
-
-	/**
-	 * Return a boolean indicating if the inventory contains the object or not.
-	 * @param {string} name - Name of the object.
-	 * @returns {boolean} true if the object is in the inventory or false otherwise.
-	 */
-	hasObject ( name ) {
-		return ( name in this.objects );
-	}
-
-	/**
-	 * Remove an object from the inventory.
-	 * @param {string or ObjSysObject} obj_or_name - The name of the object or an instance of ObjSysObject to be removed.
-	 */
-	deleteObject ( obj_or_name ) {
-		var name = null;
-		if ( typeof( obj_or_name ) === "string" ) name = obj_or_name;
-		else name = obj_or_name.name;
-
-		delete this.objects[ name ];
-	}
-
-	transferObjectFrom ( name, from_inventory ) {
-		if ( this.hasObject( name ) ) {
-			console.log( `This inventory already has object ${name}` );
-			return null;
-		}
-
-		var obj = from_inventory.getObject( name );
-		if ( obj ) {
-			this.addObject( obj );
-			from_inventory.deleteObject( obj );
-			return obj;
-		}
-		else {
-			console.log( `Starting inventory has no object ${name}` );
-			return null;
-		}
-	}
-}
 
 
 // Default values for common properties
@@ -309,12 +244,14 @@ Macro.add( 'drop', {
 		}
 
 		if ( !State.variables.obj_inventory.hasObject( name ) ) {
-			outputProperty( obj, "not-have-message", "not-have-prompt" );
+			//outputProperty( obj, "not-have-message", "not-have-prompt" );
+			ObjSysPrinter.not_in_inventory( obj );
 			return;
 		}
 
 		if ( objstore.transferObjectFrom( name, State.variables.obj_inventory ) ) {
-			outputProperty( obj, "drop-message", "drop-prompt" );
+			//outputProperty( obj, "drop-message", "drop-prompt" );
+			ObjSysPrinter.drop( obj );
 			// executes obj hook when the transfer has executed successfully
 			if ( obj.drop ) obj.drop();
 		}
@@ -405,5 +342,126 @@ class ObjSysAction {
 	}
 }
 
+
+/** Inventory class */
+class ObjSysInventory {
+	/**
+	 * Create an inventory.
+	 */
+	constructor () {
+		this.objects = {};
+	}
+
+	/**
+	 * Add an object to the inventory.
+	 * @param {ObjSysObject} obj - Object to be added.
+	 */
+	addObject ( obj ) {
+		this.objects[ obj.name ] = obj;
+	}
+
+	/**
+	 * Return the object with the specified name.
+	 * @param {string} name - Name of the object.
+	 * @returns {ObjSysObject} The object with the given name or undefined if there's no such object.
+	 */
+	getObject ( name ) {
+		return this.objects[ name ];
+	}
+
+	/**
+	 * Return a boolean indicating if the inventory contains the object or not.
+	 * @param {string} name - Name of the object.
+	 * @returns {boolean} true if the object is in the inventory or false otherwise.
+	 */
+	hasObject ( name ) {
+		return ( name in this.objects );
+	}
+
+	/**
+	 * Remove an object from the inventory.
+	 * @param {string or ObjSysObject} obj_or_name - The name of the object or an instance of ObjSysObject to be removed.
+	 */
+	deleteObject ( obj_or_name ) {
+		var name = null;
+		if ( typeof( obj_or_name ) === "string" ) name = obj_or_name;
+		else name = obj_or_name.name;
+
+		delete this.objects[ name ];
+	}
+
+	/**
+	 * Moves an object from another inventory to this inventory.
+	 * @param {string} name - name of the object to be transferred.
+	 * @param {ObjSysInventory} from_inventory - inventory from which the object must be picked up.
+	 * @returns {ObjSysObject or null} the transferred object or null if the object couldn't be transferred.
+	 */
+	transferObjectFrom ( name, from_inventory ) {
+		if ( this.hasObject( name ) ) {
+			console.log( `This inventory already has object ${name}` );
+			return null;
+		}
+
+		var obj = from_inventory.getObject( name );
+		if ( obj ) {
+			this.addObject( obj );
+			from_inventory.deleteObject( obj );
+			return obj;
+		}
+		else {
+			console.log( `Starting inventory has no object ${name}` );
+			return null;
+		}
+	}
+}
+
+
+class ObjSysPrinter {
+	static drop ( obj ) {
+		this.print( obj, "drop-message", "drop-prompt" );
+	}
+
+	static not_in_inventory ( obj ) {
+		this.print( obj, "not-have-message", "not-have-prompt" );
+	}
+
+	static print ( obj, name, title ) {
+		// get property from object
+		var property = obj.getPropertyValue( name );
+		// if missing get property from defaults
+		if ( !property ) property = State.variables.obj_default_properties[ name ];
+		// if missing get property undefined message
+		if ( !property ) property = State.variables.obj_default_properties[ "obj-property-undefined-message" ].replace( "__property__", name ).replace( "__object__", obj.name );
+
+		var promptText = obj.getPropertyValue( title );
+		if ( !promptText ) promptText = State.variables.obj_default_properties[ title ];
+		if ( !promptText ) promptText = State.variables.obj_default_properties[ "obj-property-undefined-prompt" ].replace( "__property__", name ).replace( "__object__", obj.name );
+
+		// prompt row with a unique ID
+		var $prompt = $( document.createElement( "div" ) );
+		var promptid = "objprompt" + generateUUID();
+		$prompt.attr( "id", promptid );
+		// content of the prompt
+		$prompt.wiki( `<<obj-execute "${obj.name}" "examine">>X<</obj-execute>>\
+		<<link "G">><<pickup "${obj.name}">><</link>>\
+		<<link "D">><<drop "${obj.name}">><</link>>\
+		''> ${promptText} ${obj.name}''` );
+
+		// row with the property content
+		var $content = $( document.createElement( "div" ) );
+		$content.wiki( property + "<p/>" );
+
+		// script element to move the new prompt into view
+		var $script = $( document.createElement( "script" ) );
+		$script.text( `$( "#${promptid}" )[0].scrollIntoView()` );
+
+		// append everything to the #messagebox element
+		$prompt.appendTo( $( "#messagebox" ) );
+		$content.appendTo( $( "#messagebox" ) );
+		$script.appendTo( $( "#messagebox" ) );
+
+	}
+
+}
 
 }());  // end of namespace
