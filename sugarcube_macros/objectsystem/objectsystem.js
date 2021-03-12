@@ -19,27 +19,6 @@
 (function () { // namespace isolation
 
 
-
-// Default values for common properties
-State.variables.obj_default_properties = {
-	"examine-message": "@@color:red;Object description not provided@@",
-	"examine-prompt": "Examine",
-	"get-message": "You got the object",
-	"get-prompt": "Get",
-	"have-message": "The object is already in your inventory",
-	"have-prompt": "Get",
-	"drop-message": "You dropped the object",
-	"drop-prompt": "Drop",
-	"not-have-message": "You don't have the object in your inventory",
-	"not-have-prompt": "Drop",
-	// ...
-
-	// if the requested property is not defined we use this to display an error message
-	"obj-property-undefined-message": '@@color:red;No property "__property__" defined for object "__object__"@@',
-	"obj-property-undefined-prompt": "@@color:red;!!Missing prompt!!@@"
-};
-
-
 // This is executed before the rendering of the incoming passage
 $( document ).one( ':passagestart', function ( _ev ) {
 	// create the global inventory object used throughout the game.
@@ -190,7 +169,7 @@ Macro.add( 'examine', {
 			return;
 		}
 
-		outputProperty( obj, "examine-message", "examine-prompt" );
+		ObjSysPrinter.examine( obj );
 		if ( obj.examine ) obj.examine();
 	}
 })
@@ -215,12 +194,12 @@ Macro.add( 'pickup', {
 		}
 
 		if ( inventory.hasObject( name ) ) {
-			outputProperty( obj, "have-message", "have-prompt" );
+			ObjSysPrinter.in_inventory( obj );
 			return;
 		}
 
 		if ( inventory.transferObjectFrom( name, State.temporary.obj_objects ) ) {
-			outputProperty( obj, "get-message", "get-prompt" );
+			ObjSysPrinter.pickup( obj );
 			// executes obj hook when the transfer has executed successfully
 			if ( obj.pickup ) obj.pickup();
 		}
@@ -244,13 +223,11 @@ Macro.add( 'drop', {
 		}
 
 		if ( !State.variables.obj_inventory.hasObject( name ) ) {
-			//outputProperty( obj, "not-have-message", "not-have-prompt" );
 			ObjSysPrinter.not_in_inventory( obj );
 			return;
 		}
 
 		if ( objstore.transferObjectFrom( name, State.variables.obj_inventory ) ) {
-			//outputProperty( obj, "drop-message", "drop-prompt" );
 			ObjSysPrinter.drop( obj );
 			// executes obj hook when the transfer has executed successfully
 			if ( obj.drop ) obj.drop();
@@ -259,44 +236,12 @@ Macro.add( 'drop', {
 })
 
 
-function outputProperty ( obj, name, title ) {
-	// get property from object
-	var property = obj.getPropertyValue( name );
-	// if missing get property from defaults
-	if ( !property ) property = State.variables.obj_default_properties[ name ];
-	// if missing get property undefined message
-	if ( !property ) property = State.variables.obj_default_properties[ "obj-property-undefined-message" ].replace( "__property__", name ).replace( "__object__", obj.name );
-
-	var promptText = obj.getPropertyValue( title );
-	if ( !promptText ) promptText = State.variables.obj_default_properties[ title ];
-	if ( !promptText ) promptText = State.variables.obj_default_properties[ "obj-property-undefined-prompt" ].replace( "__property__", name ).replace( "__object__", obj.name );
-
-	// prompt row with a unique ID
-	var $prompt = $( document.createElement( "div" ) );
-	var promptid = "objprompt" + generateUUID();
-	$prompt.attr( "id", promptid );
-	// content of the prompt
-	$prompt.wiki( `<<obj-execute "${obj.name}" "examine">>X<</obj-execute>>\
-	<<link "G">><<pickup "${obj.name}">><</link>>\
-	<<link "D">><<drop "${obj.name}">><</link>>\
-	''> ${promptText} ${obj.name}''` );
-
-	// row with the property content
-	var $content = $( document.createElement( "div" ) );
-	$content.wiki( property + "<p/>" );
-
-	// script element to move the new prompt into view
-	var $script = $( document.createElement( "script" ) );
-	$script.text( `$( "#${promptid}" )[0].scrollIntoView()` );
-
-	// append everything to the #messagebox element
-	$prompt.appendTo( $( "#messagebox" ) );
-	$content.appendTo( $( "#messagebox" ) );
-	$script.appendTo( $( "#messagebox" ) );
-}
-
-
+/** Class representing an object */
 class ObjSysObject {
+	/**
+	 * Create an object.
+	 * @param {string} name - Object name.
+	 */
 	constructor ( name ) {
 		this.name = name;
 
@@ -304,8 +249,15 @@ class ObjSysObject {
 		this.actions = {};
 	}
 
+	/**
+	 * Set the value of the specified property, creating it if not present.
+	 * @param {string} name - Property name.
+	 * @param {string} value - Property value.
+	 */
 	setProperty ( name, value ) {
-		this.properties[ name ] = new ObjSysProperty( name, value );
+		var p = this.properties[ name ];
+		if ( p ) p.value = value;
+		else p = new ObjSysProperty( name, value );
 	}
 
 	getPropertyValue ( name ) {
@@ -417,32 +369,62 @@ class ObjSysInventory {
 
 
 class ObjSysPrinter {
+	static default_properties = {
+		"examine-message": new ObjSysProperty( "examine-message", "@@color:red;Object description not provided@@" ),
+		"examine-prompt": new ObjSysProperty( "examine-prompt", "Examine" ),
+		"pickup-message": new ObjSysProperty( "pickup-message", "You got the object" ),
+		"pickup-prompt": new ObjSysProperty( "pickup-prompt", "Get" ),
+		"in-inventory-message": new ObjSysProperty( "in-inventory-message", "The object is already in your inventory" ),
+		"in-inventory-prompt": new ObjSysProperty( "in-inventory-prompt", "Get" ),
+		"drop-message": new ObjSysProperty( "drop-message", "You dropped the object" ),
+		"drop-prompt": new ObjSysProperty( "drop-prompt", "Drop" ),
+		"not-in-inventory-message": new ObjSysProperty( "not-in-inventory-message", "You don't have the object in your inventory" ),
+		"not-in-inventory-prompt": new ObjSysProperty( "not-in-inventory-prompt", "Drop" ),
+		// ...
+	
+		// if the requested property is not defined we use this to display an error message
+		"obj-property-undefined-message": new ObjSysProperty( "obj-property-undefined-message", '@@color:red;No property "__property__" defined for object "__object__"@@' ),
+		"obj-property-undefined-prompt": new ObjSysProperty( "obj-property-undefined-prompt", "@@color:red;!!Missing prompt!!@@" )
+	}
+
 	static drop ( obj ) {
 		this.print( obj, "drop-message", "drop-prompt" );
 	}
 
 	static not_in_inventory ( obj ) {
-		this.print( obj, "not-have-message", "not-have-prompt" );
+		this.print( obj, "not-in-inventory-message", "not-in-inventory-prompt" );
+	}
+
+	static pickup ( obj ) {
+		this.print( obj, "pickup-message", "pickup-prompt" );
+	}
+
+	static in_inventory ( obj ) {
+		this.print( obj, "in-inventory-message", "in-inventory-prompt" );
+	}
+
+	static examine ( obj ) {
+		this.print( obj, "examine-message", "examine-prompt" );
 	}
 
 	static print ( obj, name, title ) {
 		// get property from object
 		var property = obj.getPropertyValue( name );
 		// if missing get property from defaults
-		if ( !property ) property = State.variables.obj_default_properties[ name ];
+		if ( !property ) property = this.default_properties[ name ].value;
 		// if missing get property undefined message
-		if ( !property ) property = State.variables.obj_default_properties[ "obj-property-undefined-message" ].replace( "__property__", name ).replace( "__object__", obj.name );
+		if ( !property ) property = this.default_properties[ "obj-property-undefined-message" ].value.replace( "__property__", name ).replace( "__object__", obj.name );
 
 		var promptText = obj.getPropertyValue( title );
-		if ( !promptText ) promptText = State.variables.obj_default_properties[ title ];
-		if ( !promptText ) promptText = State.variables.obj_default_properties[ "obj-property-undefined-prompt" ].replace( "__property__", name ).replace( "__object__", obj.name );
+		if ( !promptText ) promptText = this.default_properties[ title ].value;
+		if ( !promptText ) promptText = this.default_properties[ "obj-property-undefined-prompt" ].value.replace( "__property__", name ).replace( "__object__", obj.name );
 
 		// prompt row with a unique ID
 		var $prompt = $( document.createElement( "div" ) );
 		var promptid = "objprompt" + generateUUID();
 		$prompt.attr( "id", promptid );
 		// content of the prompt
-		$prompt.wiki( `<<obj-execute "${obj.name}" "examine">>X<</obj-execute>>\
+		$prompt.wiki( `<<link "X">><<examine "${obj.name}">><</link>>\
 		<<link "G">><<pickup "${obj.name}">><</link>>\
 		<<link "D">><<drop "${obj.name}">><</link>>\
 		''> ${promptText} ${obj.name}''` );
