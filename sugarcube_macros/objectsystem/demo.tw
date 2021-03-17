@@ -21,9 +21,6 @@ Pick up <<link "book">><<pickup "book">><</link>>.
 @@
 
 <<silently>>
-<<obj-default-property-set "get-message">>Hai preso l'oggetto
-<</obj-default-property-set>>
-
 <<obj-define "book">>
 <<obj-property-set "book" "examine-message">>It's a very old book
 <</obj-property-set>>

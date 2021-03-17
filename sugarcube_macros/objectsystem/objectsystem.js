@@ -21,14 +21,20 @@
 
 // This is executed before the rendering of the incoming passage
 $( document ).one( ':passagestart', function ( _ev ) {
+	// Need to find a better place for these, but doing it outside of a function doesn't work.
 	// create the global inventory object used throughout the game.
-	// Need to find a better place, but doing it outside of a function doesn't work.
-	var inventory = State.variables.obj_inventory;
-	if ( !inventory ) State.variables.obj_inventory = new ObjSysInventory();
+	if ( !State.variables.obj_inventory ) State.variables.obj_inventory = new ObjSysInventory();
+	// create the storage for the passages inventories
+	if ( !State.variables.obj_passage_inventories ) State.variables.obj_passage_inventories = {};
 
-	// create the temporary objects store
-	var objstore = State.temporary.obj_objects;
-	if ( !objstore ) State.temporary.obj_objects = new ObjSysInventory();
+	// create the passage objects store (it's associated to the passage ID)
+	var objstore = State.variables.obj_passage_inventories[ Story.get( State.passage ).domId ];
+	if ( !objstore ) {
+		objstore = new ObjSysInventory();
+		State.variables.obj_passage_inventories[ Story.get( State.passage ).domId ] = objstore;
+	}
+	// store the passage inventory also in a temporary variable for easy access from the passage code
+	State.temporary.obj_objects = objstore;
 });
 
 
@@ -138,22 +144,6 @@ Macro.add( 'obj-execute', {
 	}
 })
 
-/** @function  obj-default-property-set
- *  Sets the default value for a property. The property content is taken from the macro payload.
- *  @param {string} propertyName - Name of the property to set.
- *  @throws Returns an error if the property name is missing.
-*/
-Macro.add( 'obj-default-property-set', {
-	tags     : [],
-	handler  : function () {
-		var propertyName = this.args[ 0 ];
-
-		if ( !propertyName ) return this.error( 'obj-default-property-set: missing property name' );
-
-		State.variables.obj_default_properties[ propertyName ] = this.payload[ 0 ].contents;
-	}
-})
-
 
 Macro.add( 'examine', {
 	// no tags: self closing macro element
@@ -257,7 +247,7 @@ class ObjSysObject {
 	setProperty ( name, value ) {
 		var p = this.properties[ name ];
 		if ( p ) p.value = value;
-		else p = new ObjSysProperty( name, value );
+		else this.properties[ name ] = new ObjSysProperty( name, value );
 	}
 
 	getPropertyValue ( name ) {
@@ -267,7 +257,12 @@ class ObjSysObject {
 	}
 
 	setAction ( name, type, value ) {
-		this.actions[ name ] = new ObjSysAction( name, type, value );
+		var a = this.actions[ name ];
+		if ( a ) {
+			a.type = type;
+			a.value = value;
+		}
+		else this.actions[ name ] = new ObjSysAction( name, type, value );
 	}
 
 	getActionValue ( name ) {
