@@ -20,7 +20,7 @@
 
 
 // This is executed before the rendering of the incoming passage
-$( document ).one( ':passagestart', function ( _ev ) {
+$( document ).on( ':passagestart', function ( ev ) {
 	// Need to find a better place for these, but doing it outside of a function doesn't work.
 	// create the global inventory object used throughout the game.
 	if ( !State.variables.obj_inventory ) State.variables.obj_inventory = new ObjSysInventory();
@@ -28,13 +28,13 @@ $( document ).one( ':passagestart', function ( _ev ) {
 	if ( !State.variables.obj_passage_inventories ) State.variables.obj_passage_inventories = {};
 
 	// create the passage objects store (it's associated to the passage ID)
-	var objstore = State.variables.obj_passage_inventories[ Story.get( State.passage ).domId ];
+	var objstore = State.variables.obj_passage_inventories[ ev.passage.domId ];
 	if ( !objstore ) {
 		objstore = new ObjSysInventory();
-		State.variables.obj_passage_inventories[ Story.get( State.passage ).domId ] = objstore;
+		State.variables.obj_passage_inventories[ ev.passage.domId ] = objstore;
 	}
 	// store the passage inventory also in a temporary variable for easy access from the passage code
-	State.temporary.obj_objects = objstore;
+	State.temporary.psg_objects = objstore;
 });
 
 
@@ -62,7 +62,7 @@ function getPropertyID ( name ) {
 
 
 function getObject ( name ) {
-	var objstore = State.temporary.obj_objects;
+	var objstore = State.temporary.psg_objects;
 	var inventory = State.variables.obj_inventory;
 	var obj = null;
 
@@ -80,7 +80,7 @@ Macro.add( 'obj-define', {
 
 		if ( !name ) return this.error( 'obj-define: missing object name' );
 
-		var objstore = State.temporary.obj_objects;
+		var objstore = State.temporary.psg_objects;
 		var obj = getObject( name );
 
 		/* Note that with this check two objects with the same name cannot exist,
@@ -188,7 +188,7 @@ Macro.add( 'pickup', {
 			return;
 		}
 
-		if ( inventory.transferObjectFrom( name, State.temporary.obj_objects ) ) {
+		if ( inventory.transferObjectFrom( name, State.temporary.psg_objects ) ) {
 			ObjSysPrinter.pickup( obj );
 			// executes obj hook when the transfer has executed successfully
 			if ( obj.pickup ) obj.pickup();
@@ -205,7 +205,7 @@ Macro.add( 'drop', {
 		if ( !name ) return this.error( 'drop: missing object name' );
 
 		var obj = getObject( name );
-		var objstore = State.temporary.obj_objects;
+		var objstore = State.temporary.psg_objects;
 
 		if ( !obj ) {
 			console.warn( `drop: object ${name} not defined` );

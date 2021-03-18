@@ -3,23 +3,14 @@
     "ifid": "7E84F760-498F-4832-80B5-5DC61EC86407",
     "format": "SugarCube",
     "format-version": "2.34.1",
-    "start": "Test object system",
+    "start": "Room",
     "zoom": 1
 }
 
 :: StoryTitle
 Test object system
 
-:: Test object system
-You find yourself in a wide room with a wooden table in the center. Over the table there is a <<link "book">><<examine "book">><</link>> that looks very old.
-On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<link "door">><<examine "door">><</link>>.
-
-Pick up <<link "book">><<pickup "book">><</link>>.
-
-
-@@#messagebox;
-@@
-
+:: Room
 <<silently>>
 <<obj-define "book">>
 <<obj-property-set "book" "examine-message">>It's a very old book
@@ -32,3 +23,14 @@ Pick up <<link "book">><<pickup "book">><</link>>.
 <</obj-define>>
 <</silently>>
 
+You find yourself in a wide room with a wooden table in the center. <<if _psg_objects.hasObject("book") is true>>Over the table there is a <<link "book">><<examine "book">><</link>> that looks very old<<else>>The table is empty<</if>>.
+On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<link "door">><<examine "door">><</link>>.
+
+Pick up <<link "book">><<pickup "book">><</link>>.
+[[Go through the door|Hallway]].
+
+@@#messagebox;
+@@
+
+:: Hallway
+The long hallway is poorly lit by a lone lamp located on its ceiling. On the left there's the door bringing you [[to the room|Room]] that you just left.
