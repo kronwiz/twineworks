@@ -18,23 +18,27 @@
 
 (function () { // namespace isolation
 
+/*
+The definitions of the global variables are at the bottom, after the definitions
+of the classes.
+*/
+
 
 // This is executed before the rendering of the incoming passage
 $( document ).on( ':passagestart', function ( ev ) {
-	// Need to find a better place for these, but doing it outside of a function doesn't work.
-	// create the global inventory object used throughout the game.
-	if ( !State.variables.obj_inventory ) State.variables.obj_inventory = new ObjSysInventory();
-	// create the storage for the passages inventories
-	if ( !State.variables.obj_passage_inventories ) State.variables.obj_passage_inventories = {};
-
-	// create the passage objects store (it's associated to the passage ID)
-	var objstore = State.variables.obj_passage_inventories[ ev.passage.domId ];
+	console.log( ">> PASSAGESTART: " + (new Date()) );
+	objstore = obj_passage_inventories[ ev.passage.domId ];
 	if ( !objstore ) {
 		objstore = new ObjSysInventory();
-		State.variables.obj_passage_inventories[ ev.passage.domId ] = objstore;
+		obj_passage_inventories[ ev.passage.domId ] = objstore;
 	}
-	// store the passage inventory also in a temporary variable for easy access from the passage code
+	// store the passage inventory in a temporary variable for easy access from the passage code
 	State.temporary.psg_objects = objstore;
+	// store the object inventory in a temporary variable for easy access from the passage code
+	State.temporary.obj_inventory = obj_inventory;
+
+	console.log( "objstore: " + JSON.stringify( State.temporary.psg_objects ) );
+	console.log( "<< PASSAGESTART" );
 });
 
 
@@ -49,25 +53,16 @@ function generateUUID () {
 };
 
 
-/* unused
-function getObjectID ( name ) {
-	// to avoid conflicts the object ID is <passage ID> + "_" + <obj name with spaces replaced>
-	return Story.get( State.passage ).domId + "_" + name.trim().replace( / /, "_" );
-}
-
-function getPropertyID ( name ) {
-	return name.trim().replace( / /, "_" );
-}
-*/
-
-
 function getObject ( name ) {
-	var objstore = State.temporary.psg_objects;
-	var inventory = State.variables.obj_inventory;
+	console.log( ">> GETOBJECT: " + (new Date()) );
+	console.log( "objstore: " + JSON.stringify( objstore ) + "; type: " + ( objstore instanceof ObjSysInventory ) );
+
 	var obj = null;
 
 	if ( objstore.hasObject( name ) ) obj = objstore.getObject( name );
-	else if ( inventory.hasObject( name ) )	obj = inventory.getObject( name );
+	else if ( obj_inventory.hasObject( name ) )	obj = obj_inventory.getObject( name );
+
+	console.log( "<< GETOBJECT" );
 
 	return obj;
 }
@@ -76,11 +71,14 @@ function getObject ( name ) {
 Macro.add( 'obj-define', {
 	tags     : [],
 	handler  : function () {
+		console.log( ">> OBJ-DEFINE: " + (new Date()) );
+
 		var name = this.args[ 0 ];
 
 		if ( !name ) return this.error( 'obj-define: missing object name' );
 
-		var objstore = State.temporary.psg_objects;
+		console.log( "objstore: " + JSON.stringify( objstore ) );
+		
 		var obj = getObject( name );
 
 		/* Note that with this check two objects with the same name cannot exist,
@@ -94,8 +92,9 @@ Macro.add( 'obj-define', {
 			for ( var i = 0, len = this.payload.length; i < len; i++ ) {
 				$( this.output ).wiki( this.payload[ i ].contents );
 			}
-			// TODO: aggiungerlo alla lista di oggetti nella stanza se non c'e' gia'
 		}
+
+		console.log( "<< OBJ-DEFINE" );
 	}
 })
 
@@ -173,7 +172,6 @@ Macro.add( 'pickup', {
 		if ( !name ) return this.error( 'pickup: missing object name' );
 
 		var obj = getObject( name );
-		var inventory = State.variables.obj_inventory;
 
 		if ( obj ) {
 			// TODO: controllare se l'oggetto permette di essere raccolto
@@ -183,12 +181,12 @@ Macro.add( 'pickup', {
 			return;
 		}
 
-		if ( inventory.hasObject( name ) ) {
+		if ( obj_inventory.hasObject( name ) ) {
 			ObjSysPrinter.in_inventory( obj );
 			return;
 		}
 
-		if ( inventory.transferObjectFrom( name, State.temporary.psg_objects ) ) {
+		if ( obj_inventory.transferObjectFrom( name, objstore ) ) {
 			ObjSysPrinter.pickup( obj );
 			// executes obj hook when the transfer has executed successfully
 			if ( obj.pickup ) obj.pickup();
@@ -205,23 +203,49 @@ Macro.add( 'drop', {
 		if ( !name ) return this.error( 'drop: missing object name' );
 
 		var obj = getObject( name );
-		var objstore = State.temporary.psg_objects;
 
 		if ( !obj ) {
 			console.warn( `drop: object ${name} not defined` );
 			return;
 		}
 
-		if ( !State.variables.obj_inventory.hasObject( name ) ) {
+		if ( !obj_inventory.hasObject( name ) ) {
 			ObjSysPrinter.not_in_inventory( obj );
 			return;
 		}
 
-		if ( objstore.transferObjectFrom( name, State.variables.obj_inventory ) ) {
+		if ( objstore.transferObjectFrom( name, obj_inventory ) ) {
 			ObjSysPrinter.drop( obj );
 			// executes obj hook when the transfer has executed successfully
 			if ( obj.drop ) obj.drop();
 		}
+	}
+})
+
+
+Macro.add( 'open', {
+	// no tags: self closing macro element
+	handler  : function () {
+		var name = this.args[ 0 ];
+
+		if ( !name ) return this.error( 'open: missing object name' );
+
+		var obj = getObject( name );
+
+		if ( !obj ) {
+			console.warn( `open: object ${name} not defined` );
+			return;
+		}
+
+		if ( obj.getProperty( "open" ) == true ) {
+			ObjSysPrinter.is_open( obj );
+			return;
+		}
+
+		obj.setProperty( "open", true );
+		ObjSysPrinter.open( obj );
+		// executes obj hook after the object has been opened
+		if ( obj.open ) obj.open();
 	}
 })
 
@@ -250,7 +274,7 @@ class ObjSysObject {
 		else this.properties[ name ] = new ObjSysProperty( name, value );
 	}
 
-	getPropertyValue ( name ) {
+	getProperty ( name ) {
 		var prop = this.properties[ name ];
 		if ( prop ) return prop.value;
 		else return null;
@@ -375,6 +399,10 @@ class ObjSysPrinter {
 		"drop-prompt": new ObjSysProperty( "drop-prompt", "Drop" ),
 		"not-in-inventory-message": new ObjSysProperty( "not-in-inventory-message", "You don't have the object in your inventory" ),
 		"not-in-inventory-prompt": new ObjSysProperty( "not-in-inventory-prompt", "Drop" ),
+		"is-open-message": new ObjSysProperty( "is-open-message", "The object is already open" ),
+		"is-open-prompt": new ObjSysProperty( "is-open-prompt", "Open" ),
+		"open-message": new ObjSysProperty( "open-message", "You opened the object" ),
+		"open-prompt": new ObjSysProperty( "open-prompt", "Open" ),
 		// ...
 	
 		// if the requested property is not defined we use this to display an error message
@@ -402,15 +430,23 @@ class ObjSysPrinter {
 		this.print( obj, "examine-message", "examine-prompt" );
 	}
 
+	static is_open ( obj ) {
+		this.print( obj, "is-open-message", "is-open-prompt" );
+	}
+
+	static open ( obj ) {
+		this.print( obj, "open-message", "open-prompt" );
+	}
+
 	static print ( obj, name, title ) {
 		// get property from object
-		var property = obj.getPropertyValue( name );
+		var property = obj.getProperty( name );
 		// if missing get property from defaults
 		if ( !property ) property = this.default_properties[ name ].value;
 		// if missing get property undefined message
 		if ( !property ) property = this.default_properties[ "obj-property-undefined-message" ].value.replace( "__property__", name ).replace( "__object__", obj.name );
 
-		var promptText = obj.getPropertyValue( title );
+		var promptText = obj.getProperty( title );
 		if ( !promptText ) promptText = this.default_properties[ title ].value;
 		if ( !promptText ) promptText = this.default_properties[ "obj-property-undefined-prompt" ].value.replace( "__property__", name ).replace( "__object__", obj.name );
 
@@ -440,5 +476,13 @@ class ObjSysPrinter {
 	}
 
 }
+
+// create the global inventory object used throughout the game.
+var obj_inventory = new ObjSysInventory();
+// create the storage for the passages inventories
+var obj_passage_inventories = {};
+// define the passage objects store (it's associated to the passage ID)
+var objstore = null;
+
 
 }());  // end of namespace

@@ -2,7 +2,7 @@
 {
     "ifid": "7E84F760-498F-4832-80B5-5DC61EC86407",
     "format": "SugarCube",
-    "format-version": "2.34.1",
+    "format-version": "2",
     "start": "Room",
     "zoom": 1
 }
@@ -26,7 +26,8 @@ Test object system
 You find yourself in a wide room with a wooden table in the center. <<if _psg_objects.hasObject("book") is true>>Over the table there is a <<link "book">><<examine "book">><</link>> that looks very old<<else>>The table is empty<</if>>.
 On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<link "door">><<examine "door">><</link>>.
 
-Pick up <<link "book">><<pickup "book">><</link>>.
+Pick up <<link "book">><<pickup "book">><</link>>. <<if _obj_inventory.hasObject("book") is true>>You have the book in your inventory.<</if>>
+Open <<link "door">><<open "door">><</link>>.
 [[Go through the door|Hallway]].
 
 @@#messagebox;
