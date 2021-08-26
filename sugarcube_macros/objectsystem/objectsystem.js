@@ -133,7 +133,7 @@ Macro.add( 'obj-execute', {
 			var obj = getObject( name );
 
 			if ( obj ) {
-				var func = obj.getActionValue( actionName );
+				var func = obj.getAction( actionName );
 				if ( func ) func();
 				else console.warn( `No action ${actionName} defined for object "${name}"` );
 			}
@@ -174,7 +174,10 @@ Macro.add( 'pickup', {
 		var obj = getObject( name );
 
 		if ( obj ) {
-			// TODO: controllare se l'oggetto permette di essere raccolto
+			if ( obj.getProperty( "allow-pickup" ) != true ) {
+				ObjSysPrinter.pickup_not_allowed( obj );
+				return;
+			}
 		}
 		else {
 			console.warn( `pickup: object ${name} not defined` );
@@ -250,6 +253,61 @@ Macro.add( 'open', {
 })
 
 
+Macro.add( 'close', {
+	// no tags: self closing macro element
+	handler  : function () {
+		var name = this.args[ 0 ];
+
+		if ( !name ) return this.error( 'close: missing object name' );
+
+		var obj = getObject( name );
+
+		if ( !obj ) {
+			console.warn( `close: object ${name} not defined` );
+			return;
+		}
+
+		if ( obj.getProperty( "open" ) == false ) {
+			ObjSysPrinter.is_closed( obj );
+			return;
+		}
+
+		obj.setProperty( "open", false );
+		ObjSysPrinter.close( obj );
+		// executes obj hook after the object has been opened
+		if ( obj.close ) obj.close();
+	}
+})
+
+
+Macro.add( 'obj-allow', {
+	// no tags: self closing macro element
+	handler  : function () {
+		var name = this.args[ 0 ];
+		var actionName = this.args[ 1 ];
+		var flag = this.args[ 2 ];
+
+		if ( !name ) return this.error( 'obj-allow: missing object name' );
+		if ( !actionName ) return this.error( 'obj-allow: missing action name' );
+		if ( !flag ) return this.error( 'obj-allow: missing flag' );
+
+		var obj = getObject( name );
+
+		if ( !obj ) {
+			console.warn( `obj-allow: object ${name} not defined` );
+			return;
+		}
+
+		if ( [ "pickup", "open" ].indexOf( actionName ) == -1 ) {
+			console.warn( `obj-allow: action name ${actionName} not valid` );
+			return;
+		}
+
+		obj.setProperty( "allow-" + actionName, flag.toLowerCase() == "true" ? true: false );
+	}
+})
+
+
 /** Class representing an object */
 class ObjSysObject {
 	/**
@@ -274,12 +332,23 @@ class ObjSysObject {
 		else this.properties[ name ] = new ObjSysProperty( name, value );
 	}
 
+	/**
+	 * Return the value of the specified property.
+	 * @param {string} name - Property name.
+	 * @returns {any} The property value, which can be of any type previously stored.
+	 */
 	getProperty ( name ) {
 		var prop = this.properties[ name ];
 		if ( prop ) return prop.value;
 		else return null;
 	}
 
+	/**
+	 * Store the code of an action that can be executed later. It's kind of a method, but its code comes from a macro provided by the user. If an action with the given name exists then its type and value are updated. THIS IS WORK IN PROGRESS: it's not working yet.
+	 * @param {string} name - Action name.
+	 * @param {string} type - Action type. TO BE DEFINED
+	 * @param {string} value - String buffer containing the macro code.
+	 */
 	setAction ( name, type, value ) {
 		var a = this.actions[ name ];
 		if ( a ) {
@@ -289,7 +358,12 @@ class ObjSysObject {
 		else this.actions[ name ] = new ObjSysAction( name, type, value );
 	}
 
-	getActionValue ( name ) {
+	/**
+	 * Return the code of the specified action. THIS IS WORK IN PROGRESS: see also setAction.
+	 * @param {string} name - Action name.
+	 * @returns {string} The string buffer containing the macro code.
+	 */
+	getAction ( name ) {
 		var action = this.actions[ name ];
 		if ( action ) return action.value;  // Note: this works only for native actions
 		else return null;
@@ -403,6 +477,12 @@ class ObjSysPrinter {
 		"is-open-prompt": new ObjSysProperty( "is-open-prompt", "Open" ),
 		"open-message": new ObjSysProperty( "open-message", "You opened the object" ),
 		"open-prompt": new ObjSysProperty( "open-prompt", "Open" ),
+		"is-closed-message": new ObjSysProperty( "is-closed-message", "The object is already closed" ),
+		"is-closed-prompt": new ObjSysProperty( "is-closed-prompt", "Close" ),
+		"close-message": new ObjSysProperty( "close-message", "You closed the object" ),
+		"close-prompt": new ObjSysProperty( "close-prompt", "Close" ),
+		"pickup-not-allowed-message": new ObjSysProperty( "pickup-not-allowed-message", "The object can't be picked up" ),
+		"pickup-not-allowed-prompt": new ObjSysProperty( "pickup-not-allowed-prompt", "Get" ),
 		// ...
 	
 		// if the requested property is not defined we use this to display an error message
@@ -436,6 +516,18 @@ class ObjSysPrinter {
 
 	static open ( obj ) {
 		this.print( obj, "open-message", "open-prompt" );
+	}
+
+	static is_closed ( obj ) {
+		this.print( obj, "is-closed-message", "is-closed-prompt" );
+	}
+
+	static close ( obj ) {
+		this.print( obj, "close-message", "close-prompt" );
+	}
+
+	static pickup_not_allowed ( obj ) {
+		this.print( obj, "pickup-not-allowed-message", "pickup-not-allowed-prompt" );
 	}
 
 	static print ( obj, name, title ) {
@@ -477,7 +569,7 @@ class ObjSysPrinter {
 
 }
 
-// create the global inventory object used throughout the game.
+// create the global inventory object used throughout the game
 var obj_inventory = new ObjSysInventory();
 // create the storage for the passages inventories
 var obj_passage_inventories = {};

@@ -15,8 +15,9 @@ Test object system
 <<obj-define "book">>
 <<obj-property-set "book" "examine-message">>It's a very old book
 <</obj-property-set>>
-<<obj-property-set "book" "get-message">>You got the beatiful book
+<<obj-property-set "book" "get-message">>You got the beautiful book
 <</obj-property-set>>
+<<obj-allow "book" "pickup" "true">>
 <</obj-define>>
 
 <<obj-define "door">>
@@ -27,7 +28,7 @@ You find yourself in a wide room with a wooden table in the center. <<if _psg_ob
 On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<link "door">><<examine "door">><</link>>.
 
 Pick up <<link "book">><<pickup "book">><</link>>. <<if _obj_inventory.hasObject("book") is true>>You have the book in your inventory.<</if>>
-Open <<link "door">><<open "door">><</link>>.
+Open <<link "door">><<open "door">><</link>>. Close <<link "door">><<close "door">><</link>>.
 [[Go through the door|Hallway]].
 
 @@#messagebox;
