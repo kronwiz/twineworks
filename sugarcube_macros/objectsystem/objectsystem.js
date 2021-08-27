@@ -29,7 +29,7 @@ $( document ).on( ':passagestart', function ( ev ) {
 	console.log( ">> PASSAGESTART: " + (new Date()) );
 	objstore = obj_passage_inventories[ ev.passage.domId ];
 	if ( !objstore ) {
-		objstore = new ObjSysInventory();
+		objstore = new ObjSysInventory( ev.passage.domId );
 		obj_passage_inventories[ ev.passage.domId ] = objstore;
 	}
 	// store the passage inventory in a temporary variable for easy access from the passage code
@@ -79,6 +79,10 @@ Macro.add( 'obj-define', {
 
 		console.log( "objstore: " + JSON.stringify( objstore ) );
 		
+		/* TODO: sostituire con ObjSysObjectFunctionsContainer.name che cerca in tutti i passaggi
+		e non solo in quello corrente. Difatti il nome dell'oggetto deve essere unico per tutto
+		il gioco. Controllare anche i getObject in tutte le altre funzioni.
+		*/
 		var obj = getObject( name );
 
 		/* Note that with this check two objects with the same name cannot exist,
@@ -87,6 +91,7 @@ Macro.add( 'obj-define', {
 		if ( !obj ) {
 			obj = new ObjSysObject( name );
 			objstore.addObject( obj );
+			obj_object_to_passage[ name ] = objstore.passage_id;
 
 			// This executes all the obj-property-set that might be in the obj-define content
 			for ( var i = 0, len = this.payload.length; i < len; i++ ) {
@@ -235,7 +240,12 @@ Macro.add( 'open', {
 
 		var obj = getObject( name );
 
-		if ( !obj ) {
+		if ( obj ) {
+			if ( obj.getProperty( "allow-open" ) != true ) {
+				ObjSysPrinter.open_not_allowed( obj );
+				return;
+			}
+		} else {
 			console.warn( `open: object ${name} not defined` );
 			return;
 		}
@@ -267,7 +277,7 @@ Macro.add( 'close', {
 			return;
 		}
 
-		if ( obj.getProperty( "open" ) == false ) {
+		if ( obj.getProperty( "open" ) != true ) {
 			ObjSysPrinter.is_closed( obj );
 			return;
 		}
@@ -288,8 +298,8 @@ Macro.add( 'obj-allow', {
 		var flag = this.args[ 2 ];
 
 		if ( !name ) return this.error( 'obj-allow: missing object name' );
-		if ( !actionName ) return this.error( 'obj-allow: missing action name' );
-		if ( !flag ) return this.error( 'obj-allow: missing flag' );
+		if ( !actionName ) return this.error( `obj-allow for ${name}: missing action name` );
+		if ( !flag ) return this.error( `obj-allow for ${name} and action ${actionName}: missing flag` );
 
 		var obj = getObject( name );
 
@@ -393,7 +403,8 @@ class ObjSysInventory {
 	/**
 	 * Create an inventory.
 	 */
-	constructor () {
+	constructor ( passage_id = null ) {
+		this.passage_id = passage_id;
 		this.objects = {};
 	}
 
@@ -483,6 +494,8 @@ class ObjSysPrinter {
 		"close-prompt": new ObjSysProperty( "close-prompt", "Close" ),
 		"pickup-not-allowed-message": new ObjSysProperty( "pickup-not-allowed-message", "The object can't be picked up" ),
 		"pickup-not-allowed-prompt": new ObjSysProperty( "pickup-not-allowed-prompt", "Get" ),
+		"open-not-allowed-message": new ObjSysProperty( "open-not-allowed-message", "The object can't be opened" ),
+		"open-not-allowed-prompt": new ObjSysProperty( "open-not-allowed-prompt", "Open" ),
 		// ...
 	
 		// if the requested property is not defined we use this to display an error message
@@ -530,6 +543,10 @@ class ObjSysPrinter {
 		this.print( obj, "pickup-not-allowed-message", "pickup-not-allowed-prompt" );
 	}
 
+	static open_not_allowed ( obj ) {
+		this.print( obj, "open-not-allowed-message", "open-not-allowed-prompt" );
+	}
+
 	static print ( obj, name, title ) {
 		// get property from object
 		var property = obj.getProperty( name );
@@ -569,11 +586,23 @@ class ObjSysPrinter {
 
 }
 
-// create the global inventory object used throughout the game
+
+class ObjSysObjectFunctionsContainer {
+	static name ( name ) {
+		var passage = obj_object_to_passage[ name ];
+		if ( passage ) return obj_passage_inventories[ passage ][ name ];
+		else return null;
+	}
+}
+
+
+// create the global inventory object used throughout the game: object name -> object
 var obj_inventory = new ObjSysInventory();
-// create the storage for the passages inventories
+// create the storage for the passages inventories: passage domId -> inventory
 var obj_passage_inventories = {};
-// define the passage objects store (it's associated to the passage ID)
+// inverse index associating objects to passages: object name -> passage domId
+var obj_object_to_passage = {};
+// temporary variable for the passage objects store (it's associated to the passage ID)
 var objstore = null;
 
 

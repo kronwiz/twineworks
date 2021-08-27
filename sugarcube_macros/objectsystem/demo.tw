@@ -21,6 +21,7 @@ Test object system
 <</obj-define>>
 
 <<obj-define "door">>
+<<obj-allow "door" "open" "true">>
 <</obj-define>>
 <</silently>>
 
