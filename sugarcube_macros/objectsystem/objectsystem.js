@@ -32,10 +32,12 @@ $( document ).on( ':passagestart', function ( ev ) {
 		objstore = new ObjSysInventory( ev.passage.domId );
 		obj_passage_inventories[ ev.passage.domId ] = objstore;
 	}
-	// store the passage inventory in a temporary variable for easy access from the passage code
+	// store the passage inventory in a temporary variable for easy access from the story
 	State.temporary.psg_objects = objstore;
-	// store the object inventory in a temporary variable for easy access from the passage code
-	State.temporary.obj_inventory = obj_inventory;
+	// store the object inventory in a temporary variable for easy access from the story
+	State.temporary.inventory = obj_inventory;
+	// store the object function contatiner in a temporary variable for easy access from the story
+	State.temporary.object = ObjSysObjectFunctionsContainer;
 
 	console.log( "objstore: " + JSON.stringify( State.temporary.psg_objects ) );
 	console.log( "<< PASSAGESTART" );
@@ -52,7 +54,7 @@ function generateUUID () {
     return uuid;
 };
 
-
+/*
 function getObject ( name ) {
 	console.log( ">> GETOBJECT: " + (new Date()) );
 	console.log( "objstore: " + JSON.stringify( objstore ) + "; type: " + ( objstore instanceof ObjSysInventory ) );
@@ -66,7 +68,7 @@ function getObject ( name ) {
 
 	return obj;
 }
-
+*/
 
 Macro.add( 'obj-define', {
 	tags     : [],
@@ -78,11 +80,7 @@ Macro.add( 'obj-define', {
 		if ( !name ) return this.error( 'obj-define: missing object name' );
 
 		console.log( "objstore: " + JSON.stringify( objstore ) );
-		
-		/* TODO: sostituire con ObjSysObjectFunctionsContainer.name che cerca in tutti i passaggi
-		e non solo in quello corrente. Difatti il nome dell'oggetto deve essere unico per tutto
-		il gioco. Controllare anche i getObject in tutte le altre funzioni.
-		*/
+
 		var obj = getObject( name );
 
 		/* Note that with this check two objects with the same name cannot exist,
@@ -91,6 +89,7 @@ Macro.add( 'obj-define', {
 		if ( !obj ) {
 			obj = new ObjSysObject( name );
 			objstore.addObject( obj );
+			// remember in which passage the object is, for faster search
 			obj_object_to_passage[ name ] = objstore.passage_id;
 
 			// This executes all the obj-property-set that might be in the obj-define content
@@ -113,7 +112,7 @@ Macro.add( 'obj-property-set', {
 		if ( !name ) return this.error( 'obj-property-set: missing object name' );
 		if ( !propertyName ) return this.error( 'obj-property-set: missing property name' );
 
-		var obj = getObject( name );
+		var obj = ObjSysObjectFunctionsContainer.name( name );
 
 		if ( obj ) obj.setProperty( propertyName, this.payload[ 0 ].contents );
 		else console.warn( `obj-property-set: object "${name}" is undefined` );
@@ -195,6 +194,7 @@ Macro.add( 'pickup', {
 		}
 
 		if ( obj_inventory.transferObjectFrom( name, objstore ) ) {
+			delete obj_object_to_passage[ name ];  // the object is no more in any passage
 			ObjSysPrinter.pickup( obj );
 			// executes obj hook when the transfer has executed successfully
 			if ( obj.pickup ) obj.pickup();
@@ -223,6 +223,7 @@ Macro.add( 'drop', {
 		}
 
 		if ( objstore.transferObjectFrom( name, obj_inventory ) ) {
+			obj_object_to_passage[ name ] = objstore.passage_id;  // the object is in the new passage
 			ObjSysPrinter.drop( obj );
 			// executes obj hook when the transfer has executed successfully
 			if ( obj.drop ) obj.drop();
@@ -589,11 +590,20 @@ class ObjSysPrinter {
 
 class ObjSysObjectFunctionsContainer {
 	static name ( name ) {
-		var passage = obj_object_to_passage[ name ];
-		if ( passage ) return obj_passage_inventories[ passage ][ name ];
-		else return null;
+		var obj = null;
+		// first search in the inventory
+		if ( obj_inventory.hasObject( name ) ) obj = obj_inventory.getObject( name );
+		else {
+			// then in the passages
+			var passage = obj_object_to_passage[ name ];
+			if ( passage ) obj = obj_passage_inventories[ passage ].getObject( name );
+		}
+		return obj;
 	}
 }
+
+// shorter name to be used in this source code
+var getObject = ObjSysObjectFunctionsContainer.name;
 
 
 // create the global inventory object used throughout the game: object name -> object

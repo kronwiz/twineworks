@@ -1,11 +1,9 @@
 dummy: compile
 
 compile:
-	rm -f demo.html
-	tweego -o demo.html .
+	rm -f test/demo.html
+	tweego -o test/demo.html .
 
 watch:
-	# must build the demo outside of this folder otherwise tweego
-	# tries to import the demo itself in a subsequent run and complains
-	tweego -w -t -o ../demo.html .
+	tweego -w -t -o test/demo.html demo.tw objectsystem.js
 
