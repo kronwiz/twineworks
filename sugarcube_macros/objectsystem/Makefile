@@ -5,5 +5,5 @@ compile:
 	tweego -o test/demo.html .
 
 watch:
-	tweego -w -t -o test/demo.html demo.tw objectsystem.js
+	tweego -w -o test/demo.html demo.tw objectsystem.js
 

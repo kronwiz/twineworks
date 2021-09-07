@@ -437,7 +437,7 @@ class ObjSysInventory {
 
 	/**
 	 * Remove an object from the inventory.
-	 * @param {string or ObjSysObject} obj_or_name - The name of the object or an instance of ObjSysObject to be removed.
+	 * @param {(string|ObjSysObject)} obj_or_name - The name of the object or an instance of ObjSysObject to be removed.
 	 */
 	deleteObject ( obj_or_name ) {
 		var name = null;
@@ -451,7 +451,7 @@ class ObjSysInventory {
 	 * Moves an object from another inventory to this inventory.
 	 * @param {string} name - name of the object to be transferred.
 	 * @param {ObjSysInventory} from_inventory - inventory from which the object must be picked up.
-	 * @returns {ObjSysObject or null} the transferred object or null if the object couldn't be transferred.
+	 * @returns {(ObjSysObject|null)} the transferred object or null if the object couldn't be transferred.
 	 */
 	transferObjectFrom ( name, from_inventory ) {
 		if ( this.hasObject( name ) ) {
@@ -469,6 +469,14 @@ class ObjSysInventory {
 			console.log( `Starting inventory has no object ${name}` );
 			return null;
 		}
+	}
+
+	/**
+	 * Returns the list of object names contained in the inventory. Useful to build links in the story.
+	 * @returns {Array} array of strings that are the objects names contained in the inventory.
+	 */
+	list () {
+		return Object.keys( this.objects );
 	}
 }
 
