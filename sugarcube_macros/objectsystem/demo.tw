@@ -33,8 +33,7 @@ Door is open: <<print _object.name("door").getProperty("open")>>.
 Open <<link "door">><<open "door">><</link>>. Close <<link "door">><<close "door">><</link>>.
 [[Go through the door|Hallway]].
 
-<<linkreplace "Inventory">><<for _name range _inventory.list()>><<examine _name>>
-<</for>><</linkreplace>>
+<<inventory-foreach "Inventory" "#messagebox">><<link "--object--">><<examine "--object--">><</link>><</inventory-foreach>>
 
 
 @@#messagebox;

@@ -319,6 +319,40 @@ Macro.add( 'obj-allow', {
 })
 
 
+Macro.add( 'inventory-foreach', {
+	tags     : [],
+	handler  : function () {
+		var text = this.args[ 0 ];
+		var selector = this.args[ 1 ];
+		var content = this.payload[ 0 ].contents;
+
+		if ( !text ) return this.error( 'inventory-foreach: missing link text' );
+		if ( !selector ) return this.error( 'inventory-foreach: missing selector' );
+		if ( !content ) return this.error( 'inventory-foreach: missing content' );
+
+		console.log( "CONTENT -> " + content );
+	
+		var $link = $( document.createElement( "a" ) );
+		$link.addClass( "link-internal macro-link-anchor" );
+		$link.wiki( text );
+		$link.ariaClick( function ( _ev ) {
+			var $el = $( selector );
+
+			/* FIXME: find a way to wikify the content only once and then add it
+			as many times as it is needed modifying only the placeholder
+			every time.
+			*/
+			obj_inventory.list().forEach( ( name ) => {
+				$el.wiki( content );
+				$el.html( $el.html().replace( "--object--", name ) );
+				console.log( $el.html() );
+			});
+		});
+		$link.appendTo( this.output );
+	}
+})
+
+
 /** Class representing an object */
 class ObjSysObject {
 	/**
@@ -472,7 +506,7 @@ class ObjSysInventory {
 	}
 
 	/**
-	 * Returns the list of object names contained in the inventory. Useful to build links in the story.
+	 * Returns the list of object names contained in the inventory. Useful to be used in the story.
 	 * @returns {Array} array of strings that are the objects names contained in the inventory.
 	 */
 	list () {
