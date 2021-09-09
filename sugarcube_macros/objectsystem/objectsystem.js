@@ -318,7 +318,11 @@ Macro.add( 'obj-allow', {
 	}
 })
 
-
+/** @function inventory-foreach
+ * @param {string} text - Link text.
+ * @param {string} selector - Element CSS selector name (complete with "#" or other prefix if needed).
+ * @param {string} content - Wiki content to be rendered for each object in the inventory. In the content the "--object--" placeholder is replaced with the object name.
+ */
 Macro.add( 'inventory-foreach', {
 	tags     : [],
 	handler  : function () {
@@ -330,22 +334,20 @@ Macro.add( 'inventory-foreach', {
 		if ( !selector ) return this.error( 'inventory-foreach: missing selector' );
 		if ( !content ) return this.error( 'inventory-foreach: missing content' );
 
-		console.log( "CONTENT -> " + content );
-	
+		// create the link that when clicked will go through the inventory object list
 		var $link = $( document.createElement( "a" ) );
 		$link.addClass( "link-internal macro-link-anchor" );
 		$link.wiki( text );
 		$link.ariaClick( function ( _ev ) {
+			// get the element specified by the selector
 			var $el = $( selector );
 
-			/* FIXME: find a way to wikify the content only once and then add it
-			as many times as it is needed modifying only the placeholder
-			every time.
-			*/
+			// for each object in the inventory
 			obj_inventory.list().forEach( ( name ) => {
-				$el.wiki( content );
-				$el.html( $el.html().replace( "--object--", name ) );
-				console.log( $el.html() );
+				// replace the placeholder in the content with the object name (every occurrence)
+				var cont_for_obj = content.replace( /--object--/g, name );
+				// wikify the content and add it to the specified element
+				$el.wiki( cont_for_obj );
 			});
 		});
 		$link.appendTo( this.output );
@@ -416,7 +418,13 @@ class ObjSysObject {
 }
 
 
+/** Property of an object */
 class ObjSysProperty {
+	/**
+	 * Create a property.
+	 * @param {string} name - Property name.
+	 * @param {any} value - Property value.
+	 */
 	constructor ( name, value ) {
 		this.name = name;
 		this.value = value;
@@ -511,6 +519,14 @@ class ObjSysInventory {
 	 */
 	list () {
 		return Object.keys( this.objects );
+	}
+
+	/**
+	 * Returns the number of objects contained in the inventory.
+	 * @returns {Integer} Number of objects in the inventory.
+	 */
+	length () {
+		return Object.keys( this.objects ).length;
 	}
 }
 

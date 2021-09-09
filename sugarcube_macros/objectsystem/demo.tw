@@ -10,6 +10,12 @@
 :: StoryTitle
 Test object system
 
+
+:: StoryMenu
+<<inventory-foreach "Inventory" "#messagebox">><<link "--object--">><<examine "--object--">><</link>>
+<</inventory-foreach>>
+
+
 :: Room
 <<silently>>
 <<obj-define "book">>
@@ -32,8 +38,6 @@ Pick up <<link "book">><<pickup "book">><</link>>. <<if _inventory.hasObject("bo
 Door is open: <<print _object.name("door").getProperty("open")>>.
 Open <<link "door">><<open "door">><</link>>. Close <<link "door">><<close "door">><</link>>.
 [[Go through the door|Hallway]].
-
-<<inventory-foreach "Inventory" "#messagebox">><<link "--object--">><<examine "--object--">><</link>><</inventory-foreach>>
 
 
 @@#messagebox;
