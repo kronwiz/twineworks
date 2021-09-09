@@ -1,9 +1,66 @@
 # Object system
 
-This is a first attempt at an object system that allows to define objects, their properties and actions that can be performed of them.
+This is an object system that allows to define objects and their properties. It implements some actions that can be performed on them and provides the authors with tools to define others.
+
+# Documentation
+
+## Concepts
+
+### Objects
+
+#### Writing and reading properties
+
+#### Default properties
+
+"open", default messages
+
+### Inventory
+
+### Passages inventories
+
+### Picking up and dropping objects
+
+The "memory" of the system.
+
+## Macros
+
+### \<\<obj-define>>
+
+### \<\<obj-property-set>>
+
+### \<\<examine>>
+
+### \<\<pickup>>
+
+### \<\<drop>>
+
+### \<\<open>>
+
+### \<\<close>>
+
+### \<\<obj-allow>>
+
+### \<\<inventory-foreach>>
 
 
-## LICENSE
+## Functions 
+
+### _psg_objects.hasObject
+
+### _psg_objects.list
+
+### _psg_objects.length
+
+### _inventory.hasObject
+
+### _inventory.list
+
+### _inventory.length
+
+### _object.name.getProperty
+
+
+# LICENSE
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
