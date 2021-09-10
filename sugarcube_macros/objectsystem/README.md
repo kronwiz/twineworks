@@ -16,6 +16,8 @@ This is an object system that allows to define objects and their properties. It 
 
 ### Inventory
 
+#### Default properties
+
 ### Passages inventories
 
 ### Picking up and dropping objects
@@ -39,6 +41,10 @@ The "memory" of the system.
 ### \<\<close>>
 
 ### \<\<obj-allow>>
+
+### \<\<inventory-property-set>>
+
+### \<\<inventory>>
 
 ### \<\<inventory-foreach>>
 

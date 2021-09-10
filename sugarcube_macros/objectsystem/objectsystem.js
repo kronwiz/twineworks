@@ -112,7 +112,7 @@ Macro.add( 'obj-property-set', {
 		if ( !name ) return this.error( 'obj-property-set: missing object name' );
 		if ( !propertyName ) return this.error( 'obj-property-set: missing property name' );
 
-		var obj = ObjSysObjectFunctionsContainer.name( name );
+		var obj = getObject( name );
 
 		if ( obj ) obj.setProperty( propertyName, this.payload[ 0 ].contents );
 		else console.warn( `obj-property-set: object "${name}" is undefined` );
@@ -355,6 +355,42 @@ Macro.add( 'inventory-foreach', {
 })
 
 
+Macro.add( 'inventory-property-set', {
+	tags     : [],
+	handler  : function () {
+		var propertyName = this.args[ 0 ];
+
+		if ( !propertyName ) return this.error( 'inventory-property-set: missing property name' );
+
+		obj_inventory.setProperty( propertyName, this.payload[ 0 ].contents );
+	}
+})
+
+
+Macro.add( 'inventory', {
+	// no tags: self closing macro element
+	handler  : function () {
+		if ( obj_inventory.length() > 0 ) {
+			var content = obj_inventory.getProperty( "row-output-format" );
+			var res = "";
+
+			// for each object in the inventory
+			obj_inventory.list().forEach( ( name ) => {
+				// replace the placeholder in the content with the object name (every occurrence)
+				var cont_for_obj = content.replace( /--object--/g, name );
+				// add to the result
+				res = res + cont_for_obj;
+			});
+
+			obj_inventory.setProperty( "inventory-output-message", res );
+			ObjSysPrinter.inventory( obj_inventory );
+		} else {
+			ObjSysPrinter.inventory_empty( obj_inventory );
+		}
+	}
+})
+
+
 /** Class representing an object */
 class ObjSysObject {
 	/**
@@ -371,7 +407,7 @@ class ObjSysObject {
 	/**
 	 * Set the value of the specified property, creating it if not present.
 	 * @param {string} name - Property name.
-	 * @param {string} value - Property value.
+	 * @param {any} value - Property value.
 	 */
 	setProperty ( name, value ) {
 		var p = this.properties[ name ];
@@ -444,15 +480,27 @@ class ObjSysAction {
 /** Inventory class */
 class ObjSysInventory {
 	/**
-	 * Create an inventory.
+	 * Creates an inventory.
+	 * @param {string} [passage_id=null] - DOM ID of the passage if this is the inventory of the objects of a passage, otherwise you can omit it.
 	 */
 	constructor ( passage_id = null ) {
+		this.name = "inventory" // needed for printer prompt and error messages
+
 		this.passage_id = passage_id;
 		this.objects = {};
+		this.properties = {};
+
+		// default rendering of an inventory row
+		this.setProperty( "row-output-format", '<<link "--object--">><<examine "--object--">><</link>>' );
+
+		// default properties for the printer
+		this.setProperty( "inventory-output-prompt", 'List' );
+		this.setProperty( "inventory-empty-prompt", 'List' );
+		this.setProperty( "inventory-empty-message", 'Your inventory is empty' );
 	}
 
 	/**
-	 * Add an object to the inventory.
+	 * Adds an object to the inventory.
 	 * @param {ObjSysObject} obj - Object to be added.
 	 */
 	addObject ( obj ) {
@@ -460,7 +508,7 @@ class ObjSysInventory {
 	}
 
 	/**
-	 * Return the object with the specified name.
+	 * Returns the object with the specified name.
 	 * @param {string} name - Name of the object.
 	 * @returns {ObjSysObject} The object with the given name or undefined if there's no such object.
 	 */
@@ -469,7 +517,7 @@ class ObjSysInventory {
 	}
 
 	/**
-	 * Return a boolean indicating if the inventory contains the object or not.
+	 * Returns a boolean indicating if the inventory contains the object or not.
 	 * @param {string} name - Name of the object.
 	 * @returns {boolean} true if the object is in the inventory or false otherwise.
 	 */
@@ -478,7 +526,7 @@ class ObjSysInventory {
 	}
 
 	/**
-	 * Remove an object from the inventory.
+	 * Removes an object from the inventory.
 	 * @param {(string|ObjSysObject)} obj_or_name - The name of the object or an instance of ObjSysObject to be removed.
 	 */
 	deleteObject ( obj_or_name ) {
@@ -490,7 +538,7 @@ class ObjSysInventory {
 	}
 
 	/**
-	 * Moves an object from another inventory to this inventory.
+	 * Moves an object from another inventory to this inventory, deleting it from the source inventory.
 	 * @param {string} name - name of the object to be transferred.
 	 * @param {ObjSysInventory} from_inventory - inventory from which the object must be picked up.
 	 * @returns {(ObjSysObject|null)} the transferred object or null if the object couldn't be transferred.
@@ -512,6 +560,30 @@ class ObjSysInventory {
 			return null;
 		}
 	}
+
+	/**
+	 * Sets the value of the specified property, creating it if not present.
+	 * @param {string} name - Property name.
+	 * @param {any} value - Property value.
+	 */
+	 setProperty ( name, value ) {
+		var p = this.properties[ name ];
+		if ( p ) p.value = value;
+		else this.properties[ name ] = new ObjSysProperty( name, value );
+	}
+	
+	/**
+	 * Returns the value of the specified property.
+	 * @param {string} name - Property name.
+	 * @returns {any} The property value, which can be of any type previously stored.
+	 */
+	getProperty ( name ) {
+		var prop = this.properties[ name ];
+		if ( prop ) return prop.value;
+		else return null;
+	}
+	
+	/*** Public API ***/
 
 	/**
 	 * Returns the list of object names contained in the inventory. Useful to be used in the story.
@@ -606,16 +678,24 @@ class ObjSysPrinter {
 		this.print( obj, "open-not-allowed-message", "open-not-allowed-prompt" );
 	}
 
+	static inventory ( obj ) {
+		this.print( obj, "inventory-output-message", "inventory-output-prompt" );
+	}
+
+	static inventory_empty ( obj ) {
+		this.print( obj, "inventory-empty-message", "inventory-empty-prompt" );
+	}
+
 	static print ( obj, name, title ) {
 		// get property from object
 		var property = obj.getProperty( name );
 		// if missing get property from defaults
-		if ( !property ) property = this.default_properties[ name ].value;
+		if ( !property ) property = this.default_properties[ name ] ? this.default_properties[ name ].value : null;
 		// if missing get property undefined message
 		if ( !property ) property = this.default_properties[ "obj-property-undefined-message" ].value.replace( "__property__", name ).replace( "__object__", obj.name );
 
 		var promptText = obj.getProperty( title );
-		if ( !promptText ) promptText = this.default_properties[ title ].value;
+		if ( !promptText ) promptText = this.default_properties[ title ] ? this.default_properties[ title ].value : null;
 		if ( !promptText ) promptText = this.default_properties[ "obj-property-undefined-prompt" ].value.replace( "__property__", name ).replace( "__object__", obj.name );
 
 		// prompt row with a unique ID

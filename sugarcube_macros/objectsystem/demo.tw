@@ -11,9 +11,12 @@
 Test object system
 
 
+:: StoryInit
+<<inventory-property-set "row-output-format">><<link "--object--">><<examine "--object--">><</link>><</inventory-property-set>>
+
+
 :: StoryMenu
-<<inventory-foreach "Inventory" "#messagebox">><<link "--object--">><<examine "--object--">><</link>>
-<</inventory-foreach>>
+<<link "Inventory">><<inventory>><</link>>
 
 
 :: Room
