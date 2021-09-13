@@ -162,7 +162,7 @@ Macro.add( 'examine', {
 			return;
 		}
 
-		ObjSysPrinter.examine( obj );
+		ObjSysPrinter.print( obj, "examine" );
 		if ( obj.examine ) obj.examine();
 	}
 })
@@ -179,7 +179,7 @@ Macro.add( 'pickup', {
 
 		if ( obj ) {
 			if ( obj.getProperty( "allow-pickup" ) != true ) {
-				ObjSysPrinter.pickup_not_allowed( obj );
+				ObjSysPrinter.print( obj,"pickup-not-allowed" );
 				return;
 			}
 		}
@@ -189,13 +189,13 @@ Macro.add( 'pickup', {
 		}
 
 		if ( obj_inventory.hasObject( name ) ) {
-			ObjSysPrinter.in_inventory( obj );
+			ObjSysPrinter.print( obj, "in-inventory" );
 			return;
 		}
 
 		if ( obj_inventory.transferObjectFrom( name, objstore ) ) {
 			delete obj_object_to_passage[ name ];  // the object is no more in any passage
-			ObjSysPrinter.pickup( obj );
+			ObjSysPrinter.print( obj, "pickup" );
 			// executes obj hook when the transfer has executed successfully
 			if ( obj.pickup ) obj.pickup();
 		}
@@ -218,13 +218,13 @@ Macro.add( 'drop', {
 		}
 
 		if ( !obj_inventory.hasObject( name ) ) {
-			ObjSysPrinter.not_in_inventory( obj );
+			ObjSysPrinter.print( obj, "not-in-inventory" );
 			return;
 		}
 
 		if ( objstore.transferObjectFrom( name, obj_inventory ) ) {
 			obj_object_to_passage[ name ] = objstore.passage_id;  // the object is in the new passage
-			ObjSysPrinter.drop( obj );
+			ObjSysPrinter.print( obj, "drop" );
 			// executes obj hook when the transfer has executed successfully
 			if ( obj.drop ) obj.drop();
 		}
@@ -243,7 +243,7 @@ Macro.add( 'open', {
 
 		if ( obj ) {
 			if ( obj.getProperty( "allow-open" ) != true ) {
-				ObjSysPrinter.open_not_allowed( obj );
+				ObjSysPrinter.print( obj, "open-not-allowed" );
 				return;
 			}
 		} else {
@@ -252,12 +252,12 @@ Macro.add( 'open', {
 		}
 
 		if ( obj.getProperty( "open" ) == true ) {
-			ObjSysPrinter.is_open( obj );
+			ObjSysPrinter.print( obj, "is-open" );
 			return;
 		}
 
 		obj.setProperty( "open", true );
-		ObjSysPrinter.open( obj );
+		ObjSysPrinter.print( obj, "open" );
 		// executes obj hook after the object has been opened
 		if ( obj.open ) obj.open();
 	}
@@ -279,12 +279,12 @@ Macro.add( 'close', {
 		}
 
 		if ( obj.getProperty( "open" ) != true ) {
-			ObjSysPrinter.is_closed( obj );
+			ObjSysPrinter.print( obj, "is-closed" );
 			return;
 		}
 
 		obj.setProperty( "open", false );
-		ObjSysPrinter.close( obj );
+		ObjSysPrinter.print( obj, "close" );
 		// executes obj hook after the object has been opened
 		if ( obj.close ) obj.close();
 	}
@@ -383,9 +383,9 @@ Macro.add( 'inventory', {
 			});
 
 			obj_inventory.setProperty( "inventory-output-message", res );
-			ObjSysPrinter.inventory( obj_inventory );
+			ObjSysPrinter.print( obj_inventory, "inventory-output" );
 		} else {
-			ObjSysPrinter.inventory_empty( obj_inventory );
+			ObjSysPrinter.print( obj_inventory, "inventory-empty" );
 		}
 	}
 })
@@ -450,6 +450,17 @@ class ObjSysObject {
 		var action = this.actions[ name ];
 		if ( action ) return action.value;  // Note: this works only for native actions
 		else return null;
+	}
+
+	/***  Public API  ***/
+
+	/**
+	 * Shorter name for "getProperty" to be used in the story.
+	 * @param {string} name - Property name.
+	 * @returns {any} The property value, which can be of any type previously stored.
+	 */
+	property ( name ) {
+		return this.getProperty( name );
 	}
 }
 
@@ -586,6 +597,15 @@ class ObjSysInventory {
 	/*** Public API ***/
 
 	/**
+	 * Shorter name for "hasObject" to be used in the story.
+	 * @param {string} name - Name of the object.
+	 * @returns {boolean} true if the object is in the inventory or false otherwise.
+	 */
+	has ( name ) {
+		return this.hasObject( name )
+	}
+
+	/**
 	 * Returns the list of object names contained in the inventory. Useful to be used in the story.
 	 * @returns {Array} array of strings that are the objects names contained in the inventory.
 	 */
@@ -634,59 +654,8 @@ class ObjSysPrinter {
 		"obj-property-undefined-prompt": new ObjSysProperty( "obj-property-undefined-prompt", "@@color:red;!!Missing prompt!!@@" )
 	}
 
-	static drop ( obj ) {
-		this.print( obj, "drop-message", "drop-prompt" );
-	}
 
-	static not_in_inventory ( obj ) {
-		this.print( obj, "not-in-inventory-message", "not-in-inventory-prompt" );
-	}
-
-	static pickup ( obj ) {
-		this.print( obj, "pickup-message", "pickup-prompt" );
-	}
-
-	static in_inventory ( obj ) {
-		this.print( obj, "in-inventory-message", "in-inventory-prompt" );
-	}
-
-	static examine ( obj ) {
-		this.print( obj, "examine-message", "examine-prompt" );
-	}
-
-	static is_open ( obj ) {
-		this.print( obj, "is-open-message", "is-open-prompt" );
-	}
-
-	static open ( obj ) {
-		this.print( obj, "open-message", "open-prompt" );
-	}
-
-	static is_closed ( obj ) {
-		this.print( obj, "is-closed-message", "is-closed-prompt" );
-	}
-
-	static close ( obj ) {
-		this.print( obj, "close-message", "close-prompt" );
-	}
-
-	static pickup_not_allowed ( obj ) {
-		this.print( obj, "pickup-not-allowed-message", "pickup-not-allowed-prompt" );
-	}
-
-	static open_not_allowed ( obj ) {
-		this.print( obj, "open-not-allowed-message", "open-not-allowed-prompt" );
-	}
-
-	static inventory ( obj ) {
-		this.print( obj, "inventory-output-message", "inventory-output-prompt" );
-	}
-
-	static inventory_empty ( obj ) {
-		this.print( obj, "inventory-empty-message", "inventory-empty-prompt" );
-	}
-
-	static print ( obj, name, title ) {
+	static getMessageTitleAndText( obj, title, name ) {
 		// get property from object
 		var property = obj.getProperty( name );
 		// if missing get property from defaults
@@ -698,14 +667,23 @@ class ObjSysPrinter {
 		if ( !promptText ) promptText = this.default_properties[ title ] ? this.default_properties[ title ].value : null;
 		if ( !promptText ) promptText = this.default_properties[ "obj-property-undefined-prompt" ].value.replace( "__property__", name ).replace( "__object__", obj.name );
 
+		return [ promptText, property ];
+	}
+
+
+	static print ( obj, what ) {
+		var name = what + "-message";
+		var title = what + "-prompt";
+		var [ promptText, property ] = this.getMessageTitleAndText( obj, title, name );
+
 		// prompt row with a unique ID
 		var $prompt = $( document.createElement( "div" ) );
 		var promptid = "objprompt" + generateUUID();
 		$prompt.attr( "id", promptid );
 		// content of the prompt
-		$prompt.wiki( `<<link "X">><<examine "${obj.name}">><</link>>\
-		<<link "G">><<pickup "${obj.name}">><</link>>\
-		<<link "D">><<drop "${obj.name}">><</link>>\
+		$prompt.wiki( `<<link "<image src='images/examine.png'/>">><<examine "${obj.name}">><</link>>\
+		<<link "<image src='images/pickup.png'/>">><<pickup "${obj.name}">><</link>>\
+		<<link "<image src='images/drop.png'/>">><<drop "${obj.name}">><</link>>\
 		''> ${promptText} ${obj.name}''` );
 
 		// row with the property content

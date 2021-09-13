@@ -51,19 +51,19 @@ The "memory" of the system.
 
 ## Functions 
 
-### _psg_objects.hasObject
+### _psg_objects.has
 
 ### _psg_objects.list
 
 ### _psg_objects.length
 
-### _inventory.hasObject
+### _inventory.has
 
 ### _inventory.list
 
 ### _inventory.length
 
-### _object.name.getProperty
+### _object.name.property
 
 
 # LICENSE

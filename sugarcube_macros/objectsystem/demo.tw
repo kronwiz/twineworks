@@ -34,11 +34,11 @@ Test object system
 <</obj-define>>
 <</silently>>
 
-You find yourself in a wide room with a wooden table in the center. <<if _psg_objects.hasObject("book") is true>>Over the table there is a <<link "book">><<examine "book">><</link>> that looks very old<<else>>The table is empty<</if>>.
+You find yourself in a wide room with a wooden table in the center. <<if _psg_objects.has("book") is true>>Over the table there is a <<link "book">><<examine "book">><</link>> that looks very old<<else>>The table is empty<</if>>.
 On the left the sun light enters through a window. The wall on the right is interrupted in the middle by a <<link "door">><<examine "door">><</link>>.
 
-Pick up <<link "book">><<pickup "book">><</link>>. <<if _inventory.hasObject("book") is true>>You have the book in your inventory.<</if>>
-Door is open: <<print _object.name("door").getProperty("open")>>.
+Pick up <<link "book">><<pickup "book">><</link>>. <<if _inventory.has("book") is true>>You have the book in your inventory.<</if>>
+Door is open: <<print _object.name("door").property("open")>>.
 Open <<link "door">><<open "door">><</link>>. Close <<link "door">><<close "door">><</link>>.
 [[Go through the door|Hallway]].
 
