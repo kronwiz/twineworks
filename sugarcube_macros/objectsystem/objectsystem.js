@@ -681,10 +681,12 @@ class ObjSysPrinter {
 		var promptid = "objprompt" + generateUUID();
 		$prompt.attr( "id", promptid );
 		// content of the prompt
-		$prompt.wiki( `<<link "<image src='images/examine.png'/>">><<examine "${obj.name}">><</link>>\
-		<<link "<image src='images/pickup.png'/>">><<pickup "${obj.name}">><</link>>\
-		<<link "<image src='images/drop.png'/>">><<drop "${obj.name}">><</link>>\
-		''> ${promptText} ${obj.name}''` );
+		$prompt.wiki( `<<link "<image src='images/examine.png' alt='X' title='Examine'/>">><<examine "${obj.name}">><</link>>\
+		<<link "<image src='images/pickup.png' alt='P' title='Pickup'/>">><<pickup "${obj.name}">><</link>>\
+		<<link "<image src='images/drop.png' alt='D' title='Drop'/>">><<drop "${obj.name}">><</link>>\
+		<<link "<image src='images/open.png' alt='O' title='Open'/>">><<open "${obj.name}">><</link>>\
+		<<link "<image src='images/close.png' alt='C' title='Close'/>">><<close "${obj.name}">><</link>>\
+		| ${obj.name} ''> ${promptText}''` );
 
 		// row with the property content
 		var $content = $( document.createElement( "div" ) );
