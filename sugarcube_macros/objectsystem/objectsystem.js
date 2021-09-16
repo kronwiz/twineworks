@@ -16,7 +16,47 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+/** Class handling the localization of the messages */
+class ObjSysLocale {
+	constructor () {
+		/** @var {dictionary} m Container for the messages: constant identifying the message -> message string. The name is short to be practical. */
+		this.m = {
+			/* printer default messages */
+			"examine-message": "@@color:red;Object description not provided@@",
+			"examine-prompt": "Examine",
+			"pickup-message": "You got the object",
+			"pickup-prompt": "Get",
+			"in-inventory-message": "The object is already in your inventory",
+			"in-inventory-prompt": "Get",
+			"drop-message": "You dropped the object",
+			"drop-prompt": "Drop",
+			"not-in-inventory-message": "You don't have the object in your inventory",
+			"not-in-inventory-prompt": "Drop",
+			"is-open-message": "The object is already open",
+			"is-open-prompt": "Open",
+			"open-message": "You opened the object",
+			"open-prompt": "Open",
+			"is-closed-message": "The object is already closed",
+			"is-closed-prompt": "Close",
+			"close-message": "You closed the object",
+			"close-prompt": "Close",
+			"pickup-not-allowed-message": "The object can't be picked up",
+			"pickup-not-allowed-prompt": "Get",
+			"open-not-allowed-message": "The object can't be opened",
+			"open-not-allowed-prompt": "Open"
+		}
+	}
+}
+
+// instance of the above
+var objSysLoc = new ObjSysLocale();
+
+
 (function () { // namespace isolation
+
+// very short name for the localization object
+var l = objSysLoc;
 
 /*
 The definitions of the global variables are at the bottom, after the definitions
@@ -625,8 +665,9 @@ class ObjSysInventory {
 
 class ObjSysPrinter {
 	static default_properties = {
+		/*
 		"examine-message": new ObjSysProperty( "examine-message", "@@color:red;Object description not provided@@" ),
-		"examine-prompt": new ObjSysProperty( "examine-prompt", "Examine" ),
+		"examine-prompt": new ObjSysProperty( "examine-prompt", l.m[ "examine-prompt" ] ), // "Examine" ),
 		"pickup-message": new ObjSysProperty( "pickup-message", "You got the object" ),
 		"pickup-prompt": new ObjSysProperty( "pickup-prompt", "Get" ),
 		"in-inventory-message": new ObjSysProperty( "in-inventory-message", "The object is already in your inventory" ),
@@ -647,7 +688,8 @@ class ObjSysPrinter {
 		"pickup-not-allowed-prompt": new ObjSysProperty( "pickup-not-allowed-prompt", "Get" ),
 		"open-not-allowed-message": new ObjSysProperty( "open-not-allowed-message", "The object can't be opened" ),
 		"open-not-allowed-prompt": new ObjSysProperty( "open-not-allowed-prompt", "Open" ),
-		// ...
+		// ... 
+		*/
 	
 		// if the requested property is not defined we use this to display an error message
 		"obj-property-undefined-message": new ObjSysProperty( "obj-property-undefined-message", '@@color:red;No property "__property__" defined for object "__object__"@@' ),
@@ -659,12 +701,14 @@ class ObjSysPrinter {
 		// get property from object
 		var property = obj.getProperty( name );
 		// if missing get property from defaults
-		if ( !property ) property = this.default_properties[ name ] ? this.default_properties[ name ].value : null;
+		//if ( !property ) property = this.default_properties[ name ] ? this.default_properties[ name ].value : null;
+		if ( !property ) property = l.m[ name ];  // the default value is taken from the locale
 		// if missing get property undefined message
 		if ( !property ) property = this.default_properties[ "obj-property-undefined-message" ].value.replace( "__property__", name ).replace( "__object__", obj.name );
 
 		var promptText = obj.getProperty( title );
-		if ( !promptText ) promptText = this.default_properties[ title ] ? this.default_properties[ title ].value : null;
+		//if ( !promptText ) promptText = this.default_properties[ title ] ? this.default_properties[ title ].value : null;
+		if ( !promptText ) promptText = l.m[ title ];  // the default value is taken from the locale
 		if ( !promptText ) promptText = this.default_properties[ "obj-property-undefined-prompt" ].value.replace( "__property__", name ).replace( "__object__", obj.name );
 
 		return [ promptText, property ];

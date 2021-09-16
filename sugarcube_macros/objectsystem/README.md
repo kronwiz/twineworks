@@ -18,11 +18,17 @@ This is an object system that allows to define objects and their properties. It 
 
 #### Default properties
 
+row-output-format, default messages
+
 ### Passages inventories
 
 ### Picking up and dropping objects
 
 The "memory" of the system.
+
+### The default printer
+
+The "messagebox" selector.
 
 ## Macros
 
