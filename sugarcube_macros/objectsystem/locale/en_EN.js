@@ -24,5 +24,12 @@
 	l.m[ "pickup-not-allowed-prompt" ]  = "Get";
 	l.m[ "open-not-allowed-message" ]   = "The object can't be opened";
 	l.m[ "open-not-allowed-prompt" ]    = "Open"; 
+
+	/* hints appearing when hovering over the prompt action images */
+	l.m[ "prompt-pickup-image-title" ]  = "Pickup";
+	l.m[ "prompt-drop-image-title" ]    = "Drop";
+	l.m[ "prompt-open-image-title" ]    = "Open";
+	l.m[ "prompt-close-image-title" ]   = "Close";
+	l.m[ "prompt-examine-image-title" ] = "Examine";
 }());
 

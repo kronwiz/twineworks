@@ -44,7 +44,14 @@ class ObjSysLocale {
 			"pickup-not-allowed-message": "The object can't be picked up",
 			"pickup-not-allowed-prompt": "Get",
 			"open-not-allowed-message": "The object can't be opened",
-			"open-not-allowed-prompt": "Open"
+			"open-not-allowed-prompt": "Open",
+
+			/* hints appearing when hovering over the prompt action images */
+			"prompt-pickup-image-title": "Pickup",
+			"prompt-drop-image-title": "Drop",
+			"prompt-open-image-title": "Open",
+			"prompt-close-image-title": "Close",
+			"prompt-examine-image-title": "Examine",
 		}
 	}
 }
@@ -665,32 +672,6 @@ class ObjSysInventory {
 
 class ObjSysPrinter {
 	static default_properties = {
-		/*
-		"examine-message": new ObjSysProperty( "examine-message", "@@color:red;Object description not provided@@" ),
-		"examine-prompt": new ObjSysProperty( "examine-prompt", l.m[ "examine-prompt" ] ), // "Examine" ),
-		"pickup-message": new ObjSysProperty( "pickup-message", "You got the object" ),
-		"pickup-prompt": new ObjSysProperty( "pickup-prompt", "Get" ),
-		"in-inventory-message": new ObjSysProperty( "in-inventory-message", "The object is already in your inventory" ),
-		"in-inventory-prompt": new ObjSysProperty( "in-inventory-prompt", "Get" ),
-		"drop-message": new ObjSysProperty( "drop-message", "You dropped the object" ),
-		"drop-prompt": new ObjSysProperty( "drop-prompt", "Drop" ),
-		"not-in-inventory-message": new ObjSysProperty( "not-in-inventory-message", "You don't have the object in your inventory" ),
-		"not-in-inventory-prompt": new ObjSysProperty( "not-in-inventory-prompt", "Drop" ),
-		"is-open-message": new ObjSysProperty( "is-open-message", "The object is already open" ),
-		"is-open-prompt": new ObjSysProperty( "is-open-prompt", "Open" ),
-		"open-message": new ObjSysProperty( "open-message", "You opened the object" ),
-		"open-prompt": new ObjSysProperty( "open-prompt", "Open" ),
-		"is-closed-message": new ObjSysProperty( "is-closed-message", "The object is already closed" ),
-		"is-closed-prompt": new ObjSysProperty( "is-closed-prompt", "Close" ),
-		"close-message": new ObjSysProperty( "close-message", "You closed the object" ),
-		"close-prompt": new ObjSysProperty( "close-prompt", "Close" ),
-		"pickup-not-allowed-message": new ObjSysProperty( "pickup-not-allowed-message", "The object can't be picked up" ),
-		"pickup-not-allowed-prompt": new ObjSysProperty( "pickup-not-allowed-prompt", "Get" ),
-		"open-not-allowed-message": new ObjSysProperty( "open-not-allowed-message", "The object can't be opened" ),
-		"open-not-allowed-prompt": new ObjSysProperty( "open-not-allowed-prompt", "Open" ),
-		// ... 
-		*/
-	
 		// if the requested property is not defined we use this to display an error message
 		"obj-property-undefined-message": new ObjSysProperty( "obj-property-undefined-message", '@@color:red;No property "__property__" defined for object "__object__"@@' ),
 		"obj-property-undefined-prompt": new ObjSysProperty( "obj-property-undefined-prompt", "@@color:red;!!Missing prompt!!@@" )
@@ -725,11 +706,11 @@ class ObjSysPrinter {
 		var promptid = "objprompt" + generateUUID();
 		$prompt.attr( "id", promptid );
 		// content of the prompt
-		$prompt.wiki( `<<link "<image src='images/examine.png' alt='X' title='Examine'/>">><<examine "${obj.name}">><</link>>\
-		<<link "<image src='images/pickup.png' alt='P' title='Pickup'/>">><<pickup "${obj.name}">><</link>>\
-		<<link "<image src='images/drop.png' alt='D' title='Drop'/>">><<drop "${obj.name}">><</link>>\
-		<<link "<image src='images/open.png' alt='O' title='Open'/>">><<open "${obj.name}">><</link>>\
-		<<link "<image src='images/close.png' alt='C' title='Close'/>">><<close "${obj.name}">><</link>>\
+		$prompt.wiki( `<<link "<image src='images/examine.png' alt='X' title='${l.m["prompt-examine-image-title"]}'/>">><<examine "${obj.name}">><</link>>\
+		<<link "<image src='images/pickup.png' alt='P' title='${l.m["prompt-pickup-image-title"]}'/>">><<pickup "${obj.name}">><</link>>\
+		<<link "<image src='images/drop.png' alt='D' title='${l.m["prompt-drop-image-title"]}'/>">><<drop "${obj.name}">><</link>>\
+		<<link "<image src='images/open.png' alt='O' title='${l.m["prompt-open-image-title"]}'/>">><<open "${obj.name}">><</link>>\
+		<<link "<image src='images/close.png' alt='C' title='${l.m["prompt-close-image-title"]}'/>">><<close "${obj.name}">><</link>>\
 		| ${obj.name} ''> ${promptText}''` );
 
 		// row with the property content
@@ -750,7 +731,14 @@ class ObjSysPrinter {
 }
 
 
+/** Class used as a container for utility methods that act on objects. The methods are exposed as functions in the story. */
 class ObjSysObjectFunctionsContainer {
+	/**
+	 * Returns an object given its name, or null if not found. The method searches in the inventory and in all the passages and stops as soon as the object is found.
+	 * @param {string} name - Object name.
+	 * @returns {(ObjSysObject|null)} The object or null if not found.
+	 * @static
+	 */
 	static name ( name ) {
 		var obj = null;
 		// first search in the inventory
