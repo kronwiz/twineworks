@@ -13,7 +13,7 @@ For the developers out there: this is not a fully featured object oriented progr
 
 # Documentation
 
-## Concepts
+## Usage
 
 The things (hereafter "entities") that the system gives to the author are: objects, the main character inventory and the passages inventories.
 
@@ -64,11 +64,18 @@ Moreover, as you see in the example, it's a good habit to enclose the `<<obj-def
 
 #### Writing and reading properties
 
-name unique in the object, not globally
+An object can have any number of properties. A property has a name and a value. A property must be given a **unique name within an object**: in an object there can't be two properties with the same name because macros and functions use the name to refer to a property. On the contrary, two different objects can have a property with the same name because to access a property you must first specify the object name and then the property name.
 
-the value can be any type, even a piece of wiki text
+The property value can be of any type, even a piece of wiki text.
 
-define property when an object is defined is not repeated, so it's useful not to reset a property inadvertently
+For example, to set a property, you do this:
+
+    <<obj-property-set "book" "colour">>blue<</obj-property-set>>
+
+Setting a property the first time also creates it; setting it the following times updates its value.
+
+Because macros are executed every time the main character enters a passage, a macro like that in the example will reset the book colour to blue every time, even if it has changed in the meanwhile. This is often an unwanted effect. To avoid it the `<<obj-property-set>>` macros used to set the properties initial values must be put in the `<<obj-define>>` group. See the **Objects** section above for more details.
+
 
 #### Default properties
 
@@ -130,6 +137,9 @@ The "messagebox" selector.
 ### _inventory.length
 
 ### _object.name.property
+
+
+## Localization
 
 
 # LICENSE
