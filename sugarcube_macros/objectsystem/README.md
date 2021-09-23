@@ -77,9 +77,40 @@ Setting a property the first time also creates it; setting it the following time
 Because macros are executed every time the main character enters a passage, a macro like that in the example will reset the book colour to blue every time, even if it has changed in the meanwhile. This is often an unwanted effect. To avoid it the `<<obj-property-set>>` macros used to set the properties initial values must be put in the `<<obj-define>>` group. See the **Objects** section above for more details.
 
 
-#### Default properties
+#### Special properties
 
-"open", default messages
+When an object is created it receives some special properties that are used by some macros in this system. These properties are like all the others, they are not protected in any way, so be careful not to overwrite them otherwise some unpredictable behaviour will happen.
+
+The full list is:
+
+- `open`: a boolean (true or false) value indicating if the object is open or not. It's used by the `<<open>>` and `<<close>>` macros;
+- `allow-open`: a boolean (true or false) value indicating if the object can be opened. Default is `false`. This property is checked by the `<<open>>` macro before performing the action;
+- `allow-pickup`: a boolean (true or false) value indicating if the object can be picked up or, in other words, moved in the inventory. Default is `false`. This property is checked by the `<<pickup>>` macro before performing the action.
+
+
+#### Acting on an object
+
+There are actions that are often executed on the objects of a story and so they are already implemented in this system as macros.
+
+The first is the **`<<examine>>` macro**. If you execute the `<<examine>>` macro with the name of an object then the content of the object's `examine-message` property will appear on the screen, or a default message if that property has not been defined for the object. To execute the macro you can use any of the SugarCube constructs, like putting it in a `<<link>>`:
+
+    <<link "book">><<examine "book">><</link>>
+
+All macros print something on the screen (it's a textual adventure after all!) and messages are contained in object properties with standard names that end in `-message`. If you want to know everything about this jump to the "Printer" section below, but suppose you want to say something nice about your book, then you set the property like this during the creation of the book:
+
+    <<obj-property-set "book" "examine-message">>It's a very old book and its cover appears to have been crafted in leather.
+    <</obj-property-set>>
+
+Then there's the **`<<open>>` and `<<close>>` pair**. They open and close the object by setting the value of its `open` property accordingly. Before opening the object the `<<open>>` macro checks if the object can be opened by looking if its `allow-open` property is `true`.
+
+By default an object is not allowed to do any of these default actions so you must allow it during its creation using the `<<obj-allow>>` macro:
+
+    <<obj-allow "door" "open" "true">>
+
+
+
+->> pickup, drop
+
 
 ### Inventory
 
