@@ -107,12 +107,30 @@ By default an object is not allowed to do any of these default actions so you mu
 
     <<obj-allow "door" "open" "true">>
 
+Finally the **`<<pickup>>` and `<<drop>>` macros** respectively move the object from the passage to the character's inventory and from the character's inventory to the passage. Before picking up the object the `<<pickup>>` macro checks if the object can be picked up by looking if its `allow-pickup` property is `true`; if it's `false`, which is its default value, you must set it to true, otherwise the object stays where it is:
 
+    <<obj-allow "book" "pickup" "true">>
 
-->> pickup, drop
+More on the pickup and drop mechanism in the "Inventory" section.
 
 
 ### Inventory
+
+The inventory is the bag that the character brings with him/herself and where he/she puts the objects that picks up during the game.
+
+The inventory is already created at the beginning of the game, so there's no need to create it.
+
+The `<<inventory>>` macro prints the list of documents contained in the inventory: each document is a link that when clicked executes its `<<examine>>` macro so that it prints its description. Anyway, you can change the output of the `<<inventory>>` macro by redefining the value of its `row-output-format` property (see "Default properties below").
+
+A typical place where you put the `<<inventory>>` macro is in the StoryMenu special passage to create a new button:
+
+    :: StoryMenu
+    <<link "Inventory">><<inventory>><</link>>
+
+To know if the inventory contains an object you use the `_inventory.has()` function by passing it the object name. This is typically used in `if` statements:
+
+    <<if _inventory.has("book") is true>>...<</if>>
+
 
 #### Default properties
 
