@@ -452,6 +452,21 @@ class ObjSysObject {
 	}
 
 	/**
+	 * Create an object from another object of the same type (clone).
+	 * @param {ObjSysObject} obj - An instance of ObjSysObject.
+	 * @returns {ObjSysObject} A new object identical to the one received as parameter.
+	 */
+	static newFromObject ( obj ) {
+		var x = new ObjSysObject( obj.name );
+
+		Object.keys( obj.properties ).forEach( ( pname ) => {
+			x.setProperty( pname, obj.getProperty( pname ) );
+		});
+
+		return x;
+	}
+
+	/**
 	 * Set the value of the specified property, creating it if not present.
 	 * @param {string} name - Property name.
 	 * @param {any} value - Property value.
@@ -499,6 +514,14 @@ class ObjSysObject {
 		else return null;
 	}
 
+	/**
+	 * Creates a clone of this object. Needed by SugarCube.
+	 * @returns {ObjSysObject} A clone of this object.
+	 */
+	clone () {
+		return ObjSysObject.newFromObject( this );
+	}
+
 	/***  Public API  ***/
 
 	/**
@@ -522,6 +545,22 @@ class ObjSysProperty {
 	constructor ( name, value ) {
 		this.name = name;
 		this.value = value;
+	}
+
+	/**
+	 * Creates a clone of this object. Needed by SugarCube.
+	 * @returns {ObjSysProperty} A clone of this object.
+	 */
+	clone () {
+		return new ObjSysProperty( this.name, this.value );
+	}
+
+	/**
+	 * Creates a structure containing, among other things, a serialization of the object. Needed by SugarCube state saving.
+	 * @returns {Array} A code string that when evaluated will return a clone of the instance.
+	 */
+	toJSON () {
+		return JSON.reviveWrapper( `new ObjSysProperty( ${JSON.stringify(this.name)}, ${JSON.stringify(this.value)} )` );
 	}
 }
 
