@@ -447,21 +447,17 @@ class ObjSysObject {
 	constructor ( name ) {
 		this.name = name;
 
-		this.properties = {};
+		this.properties = {};  // TODO: convert to a Map
 		this.actions = {};
 	}
 
-	/**
-	 * Create an object from another object of the same type (clone).
-	 * @param {ObjSysObject} obj - An instance of ObjSysObject.
-	 * @returns {ObjSysObject} A new object identical to the one received as parameter.
-	 */
-	static newFromObject ( obj ) {
+	static newFromObj ( obj ) {
 		var x = new ObjSysObject( obj.name );
 
-		Object.keys( obj.properties ).forEach( ( pname ) => {
-			x.setProperty( pname, obj.getProperty( pname ) );
-		});
+		// revive each property
+		for ( const [ pname, pJSON ] of obj.properties ) {
+			x.properties[ pname ] = JSON.parse( pJSON );
+		}
 
 		return x;
 	}
@@ -504,7 +500,7 @@ class ObjSysObject {
 	}
 
 	/**
-	 * Return the code of the specified action. THIS IS WORK IN PROGRESS: see also setAction.
+	 * Returns the code of the specified action. THIS IS WORK IN PROGRESS: see also setAction.
 	 * @param {string} name - Action name.
 	 * @returns {string} The string buffer containing the macro code.
 	 */
@@ -519,7 +515,26 @@ class ObjSysObject {
 	 * @returns {ObjSysObject} A clone of this object.
 	 */
 	clone () {
-		return ObjSysObject.newFromObject( this );
+		var x = new ObjSysObject( this.name );
+
+		// creates a clone for each property in the new object
+		for (const [ pname, prop ] of Object.entries(this.properties)) {
+			x.properties[ clone( pname ) ] = prop.clone();
+		}
+
+		return x;
+	}
+
+	/**
+	 * Creates a structure containing, among other things, a serialization of the object. Needed by SugarCube state saving.
+	 * @returns {Array} A code string that when evaluated will return a clone of the instance.
+	 */
+	toJSON () {
+		// the following two rows are needed to avoid recursion in the reviveWrapper
+		// see: https://www.motoslave.net/sugarcube/2/docs/#methods-json-method-revivewrapper
+		var ownData = {};
+		Object.keys(this).forEach(function (pn) { ownData[pn] = clone(this[pn]); }, this);
+		return JSON.reviveWrapper( `new ObjSysObject.newFromObj( ${JSON.stringify(ownData)} )` );
 	}
 
 	/***  Public API  ***/
