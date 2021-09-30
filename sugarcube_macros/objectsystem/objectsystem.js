@@ -59,8 +59,9 @@ class ObjSysLocale {
 // instance of the above
 var objSysLoc = new ObjSysLocale();
 
+window.ObjectSystem = {};  // namespace isolation
 
-(function () { // namespace isolation
+(function () {
 
 // very short name for the localization object
 var l = objSysLoc;
@@ -134,7 +135,7 @@ Macro.add( 'obj-define', {
 		   and an object cannot be redefined, so when you come back to a passage the
 		   "obj-define" instructions aren't reexecuted because the objects already exist */
 		if ( !obj ) {
-			obj = new ObjSysObject( name );
+			obj = new ObjectSystem.ObjSysObject( name );
 			objstore.addObject( obj );
 			// remember in which passage the object is, for faster search
 			obj_object_to_passage[ name ] = objstore.passage_id;
@@ -439,7 +440,7 @@ Macro.add( 'inventory', {
 
 
 /** Class representing an object */
-class ObjSysObject {
+ObjectSystem.ObjSysObject = class ObjSysObject {
 	/**
 	 * Create an object.
 	 * @param {string} name - Object name.
@@ -452,13 +453,19 @@ class ObjSysObject {
 	}
 
 	static newFromObj ( obj ) {
-		var x = new ObjSysObject( obj.name );
+		var x = new ObjectSystem.ObjSysObject( obj.name );
+
+		console.log( ">> ObjectSystem.ObjSysObject.newFromObj" );
+		console.log( obj );
 
 		// revive each property
-		for ( const [ pname, pJSON ] of obj.properties ) {
-			x.properties[ pname ] = JSON.parse( pJSON );
+		/*
+		for ( const [ pname, prop ] of obj.properties ) {
+			x.properties[ pname ] = prop;
 		}
-
+		*/
+		console.log( `x instanceof ObjectSystem.ObjSysObject ? ${x instanceof ObjectSystem.ObjSysObject}` );
+		console.log( x );
 		return x;
 	}
 
@@ -470,7 +477,7 @@ class ObjSysObject {
 	setProperty ( name, value ) {
 		var p = this.properties[ name ];
 		if ( p ) p.value = value;
-		else this.properties[ name ] = new ObjSysProperty( name, value );
+		else this.properties[ name ] = new ObjectSystem.ObjSysProperty( name, value );
 	}
 
 	/**
@@ -515,7 +522,7 @@ class ObjSysObject {
 	 * @returns {ObjSysObject} A clone of this object.
 	 */
 	clone () {
-		var x = new ObjSysObject( this.name );
+		var x = new ObjectSystem.ObjSysObject( this.name );
 
 		// creates a clone for each property in the new object
 		for (const [ pname, prop ] of Object.entries(this.properties)) {
@@ -534,7 +541,7 @@ class ObjSysObject {
 		// see: https://www.motoslave.net/sugarcube/2/docs/#methods-json-method-revivewrapper
 		var ownData = {};
 		Object.keys(this).forEach(function (pn) { ownData[pn] = clone(this[pn]); }, this);
-		return JSON.reviveWrapper( `new ObjSysObject.newFromObj( ${JSON.stringify(ownData)} )` );
+		return JSON.reviveWrapper( 'ObjectSystem.ObjSysObject.newFromObj( $ReviveData$ )', ownData );
 	}
 
 	/***  Public API  ***/
@@ -551,7 +558,7 @@ class ObjSysObject {
 
 
 /** Property of an object */
-class ObjSysProperty {
+ObjectSystem.ObjSysProperty = class ObjSysProperty {
 	/**
 	 * Create a property.
 	 * @param {string} name - Property name.
@@ -567,7 +574,7 @@ class ObjSysProperty {
 	 * @returns {ObjSysProperty} A clone of this object.
 	 */
 	clone () {
-		return new ObjSysProperty( this.name, this.value );
+		return new ObjectSystem.ObjSysProperty( this.name, this.value );
 	}
 
 	/**
@@ -575,7 +582,7 @@ class ObjSysProperty {
 	 * @returns {Array} A code string that when evaluated will return a clone of the instance.
 	 */
 	toJSON () {
-		return JSON.reviveWrapper( `new ObjSysProperty( ${JSON.stringify(this.name)}, ${JSON.stringify(this.value)} )` );
+		return JSON.reviveWrapper( `new ObjectSystem.ObjSysProperty( ${JSON.stringify(this.name)}, ${JSON.stringify(this.value)} )` );
 	}
 }
 
@@ -613,7 +620,7 @@ class ObjSysInventory {
 
 	/**
 	 * Adds an object to the inventory.
-	 * @param {ObjSysObject} obj - Object to be added.
+	 * @param {ObjectSystem.ObjSysObject} obj - Object to be added.
 	 */
 	addObject ( obj ) {
 		this.objects[ obj.name ] = obj;
@@ -622,7 +629,7 @@ class ObjSysInventory {
 	/**
 	 * Returns the object with the specified name.
 	 * @param {string} name - Name of the object.
-	 * @returns {ObjSysObject} The object with the given name or undefined if there's no such object.
+	 * @returns {ObjectSystem.ObjSysObject} The object with the given name or undefined if there's no such object.
 	 */
 	getObject ( name ) {
 		return this.objects[ name ];
@@ -639,7 +646,7 @@ class ObjSysInventory {
 
 	/**
 	 * Removes an object from the inventory.
-	 * @param {(string|ObjSysObject)} obj_or_name - The name of the object or an instance of ObjSysObject to be removed.
+	 * @param {(string|ObjectSystem.ObjSysObject)} obj_or_name - The name of the object or an instance of ObjectSystem.ObjSysObject to be removed.
 	 */
 	deleteObject ( obj_or_name ) {
 		var name = null;
@@ -653,7 +660,7 @@ class ObjSysInventory {
 	 * Moves an object from another inventory to this inventory, deleting it from the source inventory.
 	 * @param {string} name - name of the object to be transferred.
 	 * @param {ObjSysInventory} from_inventory - inventory from which the object must be picked up.
-	 * @returns {(ObjSysObject|null)} the transferred object or null if the object couldn't be transferred.
+	 * @returns {(ObjectSystem.ObjSysObject|null)} the transferred object or null if the object couldn't be transferred.
 	 */
 	transferObjectFrom ( name, from_inventory ) {
 		if ( this.hasObject( name ) ) {
@@ -681,7 +688,7 @@ class ObjSysInventory {
 	 setProperty ( name, value ) {
 		var p = this.properties[ name ];
 		if ( p ) p.value = value;
-		else this.properties[ name ] = new ObjSysProperty( name, value );
+		else this.properties[ name ] = new ObjectSystem.ObjSysProperty( name, value );
 	}
 	
 	/**
@@ -727,8 +734,8 @@ class ObjSysInventory {
 class ObjSysPrinter {
 	static default_properties = {
 		// if the requested property is not defined we use this to display an error message
-		"obj-property-undefined-message": new ObjSysProperty( "obj-property-undefined-message", '@@color:red;No property "__property__" defined for object "__object__"@@' ),
-		"obj-property-undefined-prompt": new ObjSysProperty( "obj-property-undefined-prompt", "@@color:red;!!Missing prompt!!@@" )
+		"obj-property-undefined-message": new ObjectSystem.ObjSysProperty( "obj-property-undefined-message", '@@color:red;No property "__property__" defined for object "__object__"@@' ),
+		"obj-property-undefined-prompt": new ObjectSystem.ObjSysProperty( "obj-property-undefined-prompt", "@@color:red;!!Missing prompt!!@@" )
 	}
 
 
@@ -790,7 +797,7 @@ class ObjSysObjectFunctionsContainer {
 	/**
 	 * Returns an object given its name, or null if not found. The method searches in the inventory and in all the passages and stops as soon as the object is found.
 	 * @param {string} name - Object name.
-	 * @returns {(ObjSysObject|null)} The object or null if not found.
+	 * @returns {(ObjectSystem.ObjSysObject|null)} The object or null if not found.
 	 * @static
 	 */
 	static name ( name ) {

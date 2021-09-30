@@ -48,3 +48,5 @@ Open <<link "door">><<open "door">><</link>>. Close <<link "door">><<close "door
 
 :: Hallway
 The long hallway is poorly lit by a lone lamp located on its ceiling. On the left there's the door bringing you [[to the room|Room]] that you just left.
+
+<<set $foo to _object.name("book")>>
