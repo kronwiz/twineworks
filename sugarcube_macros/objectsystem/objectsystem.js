@@ -516,13 +516,9 @@ ObjectSystem.ObjSysObject = class ObjSysObject {
 	 * @returns {ObjSysObject} A clone of this object.
 	 */
 	clone () {
-		var x = new ObjectSystem.ObjSysObject( this.name );
-
+		var x = new ObjectSystem.ObjSysObject( clone( this.name ) );
 		// creates a clone for each property in the new object
-		for (const [ pname, prop ] of Object.entries(this.properties)) {
-			x.properties[ clone( pname ) ] = prop.clone();
-		}
-
+		for ( let pname in this.properties ) x.properties[ clone( pname ) ] = this.properties[ pname ].clone();
 		return x;
 	}
 
@@ -577,7 +573,7 @@ ObjectSystem.ObjSysProperty = class ObjSysProperty {
 	 * @returns {ObjSysProperty} A clone of this object.
 	 */
 	clone () {
-		return new ObjectSystem.ObjSysProperty( this.name, this.value );
+		return new ObjectSystem.ObjSysProperty( clone( this.name ), clone( this.value ) );
 	}
 
 	/**
