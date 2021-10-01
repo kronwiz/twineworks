@@ -59,9 +59,9 @@ class ObjSysLocale {
 // instance of the above
 var objSysLoc = new ObjSysLocale();
 
-window.ObjectSystem = {};  // namespace isolation
-
 (function () {
+
+window.ObjectSystem = {};  // namespace isolation
 
 // very short name for the localization object
 var l = objSysLoc;
@@ -77,7 +77,7 @@ $( document ).on( ':passagestart', function ( ev ) {
 	console.log( ">> PASSAGESTART: " + (new Date()) );
 	objstore = obj_passage_inventories[ ev.passage.domId ];
 	if ( !objstore ) {
-		objstore = new ObjSysInventory( ev.passage.domId );
+		objstore = new ObjectSystem.ObjSysInventory( ev.passage.domId );
 		obj_passage_inventories[ ev.passage.domId ] = objstore;
 	}
 	// store the passage inventory in a temporary variable for easy access from the story
@@ -85,7 +85,7 @@ $( document ).on( ':passagestart', function ( ev ) {
 	// store the object inventory in a temporary variable for easy access from the story
 	State.temporary.inventory = obj_inventory;
 	// store the object function contatiner in a temporary variable for easy access from the story
-	State.temporary.object = ObjSysObjectFunctionsContainer;
+	State.temporary.object = ObjectSystem.ObjSysObjectFunctionsContainer;
 
 	console.log( "objstore: " + JSON.stringify( State.temporary.psg_objects ) );
 	console.log( "<< PASSAGESTART" );
@@ -210,7 +210,7 @@ Macro.add( 'examine', {
 			return;
 		}
 
-		ObjSysPrinter.print( obj, "examine" );
+		ObjectSystem.ObjSysPrinter.print( obj, "examine" );
 		if ( obj.examine ) obj.examine();
 	}
 })
@@ -227,7 +227,7 @@ Macro.add( 'pickup', {
 
 		if ( obj ) {
 			if ( obj.getProperty( "allow-pickup" ) != true ) {
-				ObjSysPrinter.print( obj,"pickup-not-allowed" );
+				ObjectSystem.ObjSysPrinter.print( obj,"pickup-not-allowed" );
 				return;
 			}
 		}
@@ -237,13 +237,13 @@ Macro.add( 'pickup', {
 		}
 
 		if ( obj_inventory.hasObject( name ) ) {
-			ObjSysPrinter.print( obj, "in-inventory" );
+			ObjectSystem.ObjSysPrinter.print( obj, "in-inventory" );
 			return;
 		}
 
 		if ( obj_inventory.transferObjectFrom( name, objstore ) ) {
 			delete obj_object_to_passage[ name ];  // the object is no more in any passage
-			ObjSysPrinter.print( obj, "pickup" );
+			ObjectSystem.ObjSysPrinter.print( obj, "pickup" );
 			// executes obj hook when the transfer has executed successfully
 			if ( obj.pickup ) obj.pickup();
 		}
@@ -266,13 +266,13 @@ Macro.add( 'drop', {
 		}
 
 		if ( !obj_inventory.hasObject( name ) ) {
-			ObjSysPrinter.print( obj, "not-in-inventory" );
+			ObjectSystem.ObjSysPrinter.print( obj, "not-in-inventory" );
 			return;
 		}
 
 		if ( objstore.transferObjectFrom( name, obj_inventory ) ) {
 			obj_object_to_passage[ name ] = objstore.passage_id;  // the object is in the new passage
-			ObjSysPrinter.print( obj, "drop" );
+			ObjectSystem.ObjSysPrinter.print( obj, "drop" );
 			// executes obj hook when the transfer has executed successfully
 			if ( obj.drop ) obj.drop();
 		}
@@ -291,7 +291,7 @@ Macro.add( 'open', {
 
 		if ( obj ) {
 			if ( obj.getProperty( "allow-open" ) != true ) {
-				ObjSysPrinter.print( obj, "open-not-allowed" );
+				ObjectSystem.ObjSysPrinter.print( obj, "open-not-allowed" );
 				return;
 			}
 		} else {
@@ -300,12 +300,12 @@ Macro.add( 'open', {
 		}
 
 		if ( obj.getProperty( "open" ) == true ) {
-			ObjSysPrinter.print( obj, "is-open" );
+			ObjectSystem.ObjSysPrinter.print( obj, "is-open" );
 			return;
 		}
 
 		obj.setProperty( "open", true );
-		ObjSysPrinter.print( obj, "open" );
+		ObjectSystem.ObjSysPrinter.print( obj, "open" );
 		// executes obj hook after the object has been opened
 		if ( obj.open ) obj.open();
 	}
@@ -327,12 +327,12 @@ Macro.add( 'close', {
 		}
 
 		if ( obj.getProperty( "open" ) != true ) {
-			ObjSysPrinter.print( obj, "is-closed" );
+			ObjectSystem.ObjSysPrinter.print( obj, "is-closed" );
 			return;
 		}
 
 		obj.setProperty( "open", false );
-		ObjSysPrinter.print( obj, "close" );
+		ObjectSystem.ObjSysPrinter.print( obj, "close" );
 		// executes obj hook after the object has been opened
 		if ( obj.close ) obj.close();
 	}
@@ -431,9 +431,9 @@ Macro.add( 'inventory', {
 			});
 
 			obj_inventory.setProperty( "inventory-output-message", res );
-			ObjSysPrinter.print( obj_inventory, "inventory-output" );
+			ObjectSystem.ObjSysPrinter.print( obj_inventory, "inventory-output" );
 		} else {
-			ObjSysPrinter.print( obj_inventory, "inventory-empty" );
+			ObjectSystem.ObjSysPrinter.print( obj_inventory, "inventory-empty" );
 		}
 	}
 })
@@ -442,7 +442,7 @@ Macro.add( 'inventory', {
 /** Class representing an object */
 ObjectSystem.ObjSysObject = class ObjSysObject {
 	/**
-	 * Create an object.
+	 * Creates an object.
 	 * @param {string} name - Object name.
 	 */
 	constructor ( name ) {
@@ -452,25 +452,19 @@ ObjectSystem.ObjSysObject = class ObjSysObject {
 		this.actions = {};
 	}
 
+	/**
+	 * Creates a clone of this object starting from its serialized representation.
+	 * @param {Object} obj - Object revived from SugarCube saved state. See the toJSON method.
+	 * @returns {ObjSysObject} A clone of this object.
+	 */
 	static newFromObj ( obj ) {
 		var x = new ObjectSystem.ObjSysObject( obj.name );
-
-		console.log( ">> ObjectSystem.ObjSysObject.newFromObj" );
-		console.log( obj );
-
-		// revive each property
-		/*
-		for ( const [ pname, prop ] of obj.properties ) {
-			x.properties[ pname ] = prop;
-		}
-		*/
-		console.log( `x instanceof ObjectSystem.ObjSysObject ? ${x instanceof ObjectSystem.ObjSysObject}` );
-		console.log( x );
+		for ( let pname in obj.properties ) x.properties[ pname ] = obj.properties[ pname ];
 		return x;
 	}
 
 	/**
-	 * Set the value of the specified property, creating it if not present.
+	 * Sets the value of the specified property, creating it if not present.
 	 * @param {string} name - Property name.
 	 * @param {any} value - Property value.
 	 */
@@ -481,7 +475,7 @@ ObjectSystem.ObjSysObject = class ObjSysObject {
 	}
 
 	/**
-	 * Return the value of the specified property.
+	 * Returns the value of the specified property.
 	 * @param {string} name - Property name.
 	 * @returns {any} The property value, which can be of any type previously stored.
 	 */
@@ -492,7 +486,7 @@ ObjectSystem.ObjSysObject = class ObjSysObject {
 	}
 
 	/**
-	 * Store the code of an action that can be executed later. It's kind of a method, but its code comes from a macro provided by the user. If an action with the given name exists then its type and value are updated. THIS IS WORK IN PROGRESS: it's not working yet.
+	 * Stores the code of an action that can be executed later. It's kind of a method, but its code comes from a macro provided by the user. If an action with the given name exists then its type and value are updated. THIS IS WORK IN PROGRESS: it's not working yet.
 	 * @param {string} name - Action name.
 	 * @param {string} type - Action type. TO BE DEFINED
 	 * @param {string} value - String buffer containing the macro code.
@@ -533,7 +527,7 @@ ObjectSystem.ObjSysObject = class ObjSysObject {
 	}
 
 	/**
-	 * Creates a structure containing, among other things, a serialization of the object. Needed by SugarCube state saving.
+	 * Creates a structure containing, among other things, a serialization of the object. Needed by SugarCube to save state.
 	 * @returns {Array} A code string that when evaluated will return a clone of the instance.
 	 */
 	toJSON () {
@@ -560,13 +554,22 @@ ObjectSystem.ObjSysObject = class ObjSysObject {
 /** Property of an object */
 ObjectSystem.ObjSysProperty = class ObjSysProperty {
 	/**
-	 * Create a property.
+	 * Creates a property.
 	 * @param {string} name - Property name.
 	 * @param {any} value - Property value.
 	 */
 	constructor ( name, value ) {
 		this.name = name;
 		this.value = value;
+	}
+
+	/**
+	 * Creates a clone of this object starting from its serialized representation.
+	 * @param {Object} obj - Object revived from SugarCube saved state. See the toJSON method.
+	 * @returns {ObjSysProperty} A clone of this object.
+	 */
+	static newFromObj ( obj ) {
+		return new ObjectSystem.ObjSysProperty( obj.name, obj.value );
 	}
 
 	/**
@@ -578,16 +581,20 @@ ObjectSystem.ObjSysProperty = class ObjSysProperty {
 	}
 
 	/**
-	 * Creates a structure containing, among other things, a serialization of the object. Needed by SugarCube state saving.
+	 * Creates a structure containing, among other things, a serialization of the object. Needed by SugarCube to save state.
 	 * @returns {Array} A code string that when evaluated will return a clone of the instance.
 	 */
-	toJSON () {
-		return JSON.reviveWrapper( `new ObjectSystem.ObjSysProperty( ${JSON.stringify(this.name)}, ${JSON.stringify(this.value)} )` );
+	 toJSON () {
+		// the following two rows are needed to avoid recursion in the reviveWrapper
+		// see: https://www.motoslave.net/sugarcube/2/docs/#methods-json-method-revivewrapper
+		var ownData = {};
+		Object.keys(this).forEach(function (pn) { ownData[pn] = clone(this[pn]); }, this);
+		return JSON.reviveWrapper( 'ObjectSystem.ObjSysProperty.newFromObj( $ReviveData$ )', ownData );
 	}
 }
 
 
-class ObjSysAction {
+ObjectSystem.ObjSysAction = class ObjSysAction {
 	constructor ( name, type, value ) {
 		this.name = name;
 		this.type = type;
@@ -597,7 +604,7 @@ class ObjSysAction {
 
 
 /** Inventory class */
-class ObjSysInventory {
+ObjectSystem.ObjSysInventory = class ObjSysInventory {
 	/**
 	 * Creates an inventory.
 	 * @param {string} [passage_id=null] - DOM ID of the passage if this is the inventory of the objects of a passage, otherwise you can omit it.
@@ -620,7 +627,7 @@ class ObjSysInventory {
 
 	/**
 	 * Adds an object to the inventory.
-	 * @param {ObjectSystem.ObjSysObject} obj - Object to be added.
+	 * @param {ObjSysObject} obj - Object to be added.
 	 */
 	addObject ( obj ) {
 		this.objects[ obj.name ] = obj;
@@ -629,7 +636,7 @@ class ObjSysInventory {
 	/**
 	 * Returns the object with the specified name.
 	 * @param {string} name - Name of the object.
-	 * @returns {ObjectSystem.ObjSysObject} The object with the given name or undefined if there's no such object.
+	 * @returns {ObjSysObject} The object with the given name or undefined if there's no such object.
 	 */
 	getObject ( name ) {
 		return this.objects[ name ];
@@ -646,7 +653,7 @@ class ObjSysInventory {
 
 	/**
 	 * Removes an object from the inventory.
-	 * @param {(string|ObjectSystem.ObjSysObject)} obj_or_name - The name of the object or an instance of ObjectSystem.ObjSysObject to be removed.
+	 * @param {(string|ObjSysObject)} obj_or_name - The name of the object or an instance of ObjSysObject to be removed.
 	 */
 	deleteObject ( obj_or_name ) {
 		var name = null;
@@ -660,7 +667,7 @@ class ObjSysInventory {
 	 * Moves an object from another inventory to this inventory, deleting it from the source inventory.
 	 * @param {string} name - name of the object to be transferred.
 	 * @param {ObjSysInventory} from_inventory - inventory from which the object must be picked up.
-	 * @returns {(ObjectSystem.ObjSysObject|null)} the transferred object or null if the object couldn't be transferred.
+	 * @returns {(ObjSysObject|null)} the transferred object or null if the object couldn't be transferred.
 	 */
 	transferObjectFrom ( name, from_inventory ) {
 		if ( this.hasObject( name ) ) {
@@ -731,7 +738,7 @@ class ObjSysInventory {
 }
 
 
-class ObjSysPrinter {
+ObjectSystem.ObjSysPrinter = class ObjSysPrinter {
 	static default_properties = {
 		// if the requested property is not defined we use this to display an error message
 		"obj-property-undefined-message": new ObjectSystem.ObjSysProperty( "obj-property-undefined-message", '@@color:red;No property "__property__" defined for object "__object__"@@' ),
@@ -793,11 +800,11 @@ class ObjSysPrinter {
 
 
 /** Class used as a container for utility methods that act on objects. The methods are exposed as functions in the story. */
-class ObjSysObjectFunctionsContainer {
+ObjectSystem.ObjSysObjectFunctionsContainer = class ObjSysObjectFunctionsContainer {
 	/**
 	 * Returns an object given its name, or null if not found. The method searches in the inventory and in all the passages and stops as soon as the object is found.
 	 * @param {string} name - Object name.
-	 * @returns {(ObjectSystem.ObjSysObject|null)} The object or null if not found.
+	 * @returns {(ObjSysObject|null)} The object or null if not found.
 	 * @static
 	 */
 	static name ( name ) {
@@ -814,11 +821,11 @@ class ObjSysObjectFunctionsContainer {
 }
 
 // shorter name to be used in this source code
-var getObject = ObjSysObjectFunctionsContainer.name;
+var getObject = ObjectSystem.ObjSysObjectFunctionsContainer.name;
 
 
 // create the global inventory object used throughout the game: object name -> object
-var obj_inventory = new ObjSysInventory();
+var obj_inventory = new ObjectSystem.ObjSysInventory();
 // create the storage for the passages inventories: passage domId -> inventory
 var obj_passage_inventories = {};
 // inverse index associating objects to passages: object name -> passage domId
