@@ -17,8 +17,12 @@
 */
 
 
+(function () {
+
+window.ObjectSystem = {};  // namespace isolation
+
 /** Class handling the localization of the messages */
-class ObjSysLocale {
+ObjectSystem.ObjSysLocale = class ObjSysLocale {
 	constructor () {
 		/** @var {dictionary} m Container for the messages: constant identifying the message -> message string. The name is short to be practical. */
 		this.m = {
@@ -57,19 +61,15 @@ class ObjSysLocale {
 }
 
 // instance of the above
-var objSysLoc = new ObjSysLocale();
+ObjectSystem.objSysLoc = new ObjectSystem.ObjSysLocale();
 
-(function () {
+// very short name for the localization object to be used in this source code
+var l = ObjectSystem.objSysLoc;
 
-window.ObjectSystem = {};  // namespace isolation
-
-// very short name for the localization object
-var l = objSysLoc;
-
-/*
+/* **
 The definitions of the global variables are at the bottom, after the definitions
 of the classes.
-*/
+** */
 
 
 // This is executed before the rendering of the incoming passage

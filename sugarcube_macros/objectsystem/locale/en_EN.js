@@ -1,5 +1,5 @@
 (function () {
-	var l = objSysLoc; // shorter name
+	var l = ObjectSystem.objSysLoc; // shorter name
 
 	/* printer default messages */
 	l.m[ "examine-message" ]            = "@@color:red;Object description not provided@@";  // note the red color
